@@ -1,5 +1,5 @@
 
-module BlackScholes where
+module Main where
 
 import Random
 
@@ -8,6 +8,9 @@ import Data.Array.IArray     as IArray
 import Data.Array.Accelerate as Acc
 import Prelude               as P
 
+import qualified  Data.Array.Accelerate.Cilk as Cilk
+import Control.Exception (evaluate)
+import System.Environment (getArgs)
 
 riskfree, volatility :: Float
 riskfree   = 0.02
@@ -88,22 +91,25 @@ run n = withSystemRandom $ \gen -> do
 
 
 main = do args <- getArgs 
-          let (numOptions, granularity) =
-               case args of 
-  	         []      -> (10000, 1000)
-  	         [b]     -> (10, read b)
-	         [b,n] -> (read n, read b)
+          -- let (numOptions, granularity) =
+          --      case args of 
+  	  --        []      -> (10000, 1000)
+  	  --        [b]     -> (10, read b)
+	  --        [b,n] -> (read n, read b)
 
-          if granularity > numOptions
-	   then error "Granularity must be bigger than numOptions!!"
-	   else return ()
+          -- if granularity > numOptions
+	  --  then error "Granularity must be less than numOptions!!"
+	  --  else return ()
 
-	  putStrLn$ "Running blackscholes, numOptions "++ show numOptions ++ " and block size " ++ show granularity
+--	  putStrLn$ "Running blackscholes, numOptions "++ show numOptions ++ " and block size " ++ show granularity
+--          let numChunks = numOptions `quot` granularity
+--	        results = runPar$ parMap (computeSegment granularity . (* granularity)) [0..numChunks-1]
 
-          let numChunks = numOptions `quot` granularity
---	      results = runPar$ parMap (computeSegment granularity . (* granularity)) [0..numChunks-1]
+          (_,run_acc) <- run 100 -- 0000
 
-          results = runPar$ C.parMap (computeSegment granularity) [0, granularity .. numOptions-1]
+          let vec = Cilk.run $ run_acc ()
 
-	  putStrLn$ "Final checksum: "++ show sum
+          evaluate vec
+
+--	  putStrLn$ "Final checksum: "++ show sum
   
