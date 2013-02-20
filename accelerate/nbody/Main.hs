@@ -6,9 +6,6 @@
 import Config
 import Common.Body
 import Common.World
-import Gloss.Draw
-import Gloss.Event
-import Gloss.Simulate
 import Random.Array
 import Random.Position
 import qualified Solver.Naive                   as Naive
@@ -22,8 +19,6 @@ import Data.Label
 import System.Environment
 import System.Random.MWC                        ( uniformR )
 import Criterion.Main                           ( defaultMainWith, bench, whnf )
-import Graphics.Gloss.Interface.Pure.Game
-
 
 main :: IO ()
 main
@@ -34,8 +29,6 @@ main
                             BarnsHut    -> BarnsHut.calcAccels
 
             n           = get configBodyCount conf
-            size        = get configWindowSize conf
-            fps         = get configRate conf
             epsilon     = get configEpsilon conf
 
             -- Generate random particle positions in a disc layout centred at
@@ -53,7 +46,6 @@ main
 
             -- The initial simulation state
             --
-            universe    = initialise world
             world       = World { worldBodies   = bodies
                                 , worldSteps    = 0
                                 , worldTime     = 0 }
@@ -68,16 +60,5 @@ main
 
         -- Forward unto dawn
         --
-        if get configBenchmark conf
-           then withArgs nops $ defaultMainWith cconf (return ())
-                  [ bench "n-body" $ whnf (advance 0.1) world ]
-
-           else play
-                  (InWindow "N-Body" (size, size) (10, 10))     -- window size & position
-                  black                                         -- background colour
-                  fps                                           -- number of simulation steps per second
-                  universe                                      -- initial world
-                  (draw conf)                                   -- fn to convert a world into a picture
-                  react                                         -- fn to handle input events
-                  (simulate advance)                            -- fn to advance the world
-
+        withArgs nops $ defaultMainWith cconf (return ())
+          [ bench "nbody" $ whnf (advance 0.1) world ]

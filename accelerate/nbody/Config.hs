@@ -5,9 +5,8 @@
 module Config (
 
   Config, Solver(..),
-  configBackend, configSolver, configWindowSize, configShouldDrawTree,
-  configRate, configBodyCount, configBodyMass, configTimeStep, configEpsilon,
-  configStartDiscSize, configStartSpeed, configMaxSteps, configBenchmark,
+  configBackend, configSolver, configBodyCount, configBodyMass, configTimeStep,
+  configEpsilon, configStartDiscSize, configStartSpeed, configMaxSteps,
   configDumpFinal,
 
   parseArgs,
@@ -28,17 +27,14 @@ import qualified Criterion.Config                       as Criterion
 
 import Data.Array.Accelerate                            ( Arrays, Acc )
 import qualified Data.Array.Accelerate.Interpreter      as Interp
-#ifdef ACCELERATE_CUDA_BACKEND
 import qualified Data.Array.Accelerate.CUDA             as CUDA
-#endif
+
 
 
 -- | Program configuration
 --
 data Backend = Interpreter
-#ifdef ACCELERATE_CUDA_BACKEND
              | CUDA
-#endif
   deriving (Bounded, Show)
 
 
@@ -53,10 +49,6 @@ data Config
     _configBackend              :: Backend
   , _configSolver               :: Solver
 
-    -- How to present the output
-  , _configWindowSize           :: Int
-  , _configShouldDrawTree       :: Bool
-  , _configRate                 :: Int
 
     -- System setup
   , _configBodyCount            :: Int
@@ -70,7 +62,6 @@ data Config
 
     -- Terminating conditions
   , _configMaxSteps             :: Maybe Int
-  , _configBenchmark            :: Bool
   , _configHelp                 :: Bool
 
     -- Dump final particle locations to file
@@ -87,10 +78,6 @@ defaultConfig = Config
     _configBackend              = maxBound
   , _configSolver               = Naive         -- no barns-hut yet!
 
-  , _configWindowSize           = 1000
-  , _configShouldDrawTree       = False         -- no barns-hut yet!
-  , _configRate                 = 30
-
   , _configBodyCount            = 200
   , _configBodyMass             = 1000
   , _configTimeStep             = 1
@@ -100,7 +87,6 @@ defaultConfig = Config
   , _configStartSpeed           = 0.5
 
   , _configMaxSteps             = Nothing
-  , _configBenchmark            = False
   , _configHelp                 = False
 
   , _configDumpFinal            = Nothing
@@ -113,18 +99,15 @@ run :: Arrays a => Config -> Acc a -> a
 run config =
   case _configBackend config of
     Interpreter -> Interp.run
-#ifdef ACCELERATE_CUDA_BACKEND
     CUDA        -> CUDA.run
-#endif
+
 
 
 run1 :: (Arrays a, Arrays b) => Config -> (Acc a -> Acc b) -> a -> b
 run1 config f =
   case _configBackend config of
     Interpreter -> head . Interp.stream f . return
-#ifdef ACCELERATE_CUDA_BACKEND
     CUDA        -> CUDA.run1 f
-#endif
 
 
 -- | The set of available command-line options
@@ -135,27 +118,15 @@ defaultOptions =
             (NoArg (set configBackend Interpreter))
             "reference implementation (sequential)"
 
-#ifdef ACCELERATE_CUDA_BACKEND
+
   , Option  [] ["cuda"]
             (NoArg (set configBackend CUDA))
             "implementation for NVIDIA GPUs (parallel)"
-#endif
+
 
   , Option  ['s'] ["solver"]
             (ReqArg (set configSolver . solver) "ALGORITHM")
             ("solver to use, one of: " ++ intercalate ", " (map show [minBound .. maxBound :: Solver]))
-
-  , Option  [] ["size"]
-            (ReqArg (set configWindowSize . read) "INT")
-            (describe configWindowSize "visualisation size")
-
-  , Option  [] ["framerate"]
-            (ReqArg (set configRate . read) "INT")
-            (describe configRate "visualisation frame rate")
-
-  , Option  [] ["draw-tree"]
-            (NoArg (set configShouldDrawTree True))
-            "draw the Barns-Hut quad tree"
 
   , Option  ['n'] ["bodies"]
             (ReqArg (set configBodyCount . read) "INT")
@@ -184,10 +155,6 @@ defaultOptions =
   , Option  [] ["max-steps"]
             (ReqArg (set configMaxSteps . read) "INT")
             (describe configMaxSteps "exit simulation after this many steps")
-
-  , Option  [] ["benchmark"]
-            (NoArg (set configBenchmark True))
-            (describe configBenchmark "benchmark instead of displaying animation")
 
   , Option  [] ["dump-final"]
             (ReqArg (set configDumpFinal . Just) "FILE")
@@ -229,10 +196,8 @@ parseArgs argv
 
         -- pass unrecognised options to criterion
         (cconf, rest)     <- Criterion.parseArgs Criterion.defaultConfig Criterion.defaultOptions n
-        case foldr id defaultConfig o of
-          conf | False <- get configHelp conf           -> return (conf, cconf,          rest)
-          conf | True  <- get configBenchmark conf      -> return (conf, cconf, "--help":rest)
-          _                                             -> putStrLn (helpMsg []) >> exitSuccess
+        let conf = foldr id defaultConfig o
+        return (conf, cconf, rest)
 
       (_,_,_,err) -> error (helpMsg err)
 
