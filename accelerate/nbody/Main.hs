@@ -18,7 +18,10 @@ import Prelude                                  as P
 import Data.Label
 import System.Environment
 import System.Random.MWC                        ( uniformR )
-import Criterion.Main                           ( defaultMainWith, bench, whnf )
+import Criterion                                ( bench, whnf, runBenchmark )
+import Criterion.Monad                          ( withConfig )
+import Criterion.Analysis                       ( analyseMean )
+import Criterion.Environment                    ( measureEnvironment )
 
 main :: IO ()
 main
@@ -60,5 +63,6 @@ main
 
         -- Forward unto dawn
         --
-        withArgs nops $ defaultMainWith cconf (return ())
-          [ bench "nbody" $ whnf (advance 0.1) world ]
+        mean <- withConfig cconf $ measureEnvironment >>= flip runBenchmark (whnf (advance 0.1) world) >>= flip analyseMean 100
+        putStrLn $ "SELFTIMED: " ++ show mean
+
