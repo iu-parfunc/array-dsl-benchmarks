@@ -7,9 +7,9 @@ module World (
   World,
 
   -- Updating the World state
-  renderWorld, initialWorld, refocus, react
+  renderWorld, initialWorld, refocus
 
-) where
+  ) where
 
 import Mandel
 import Config
@@ -17,7 +17,6 @@ import Config
 import Data.Char
 import Data.Label
 import Data.Array.Accelerate                    as A hiding ( size )
-import Graphics.Gloss.Interface.Pure.Game       hiding ( translate, scale )
 
 
 -- World state
@@ -119,39 +118,6 @@ refocus = move . zoom
               midx  = x + sizex / 2
               midy  = y + sizey / 2
           in (midx - dx, midy - dy, midx + dx, midy + dy)
-
-
--- Event locations are returned as window coordinates, where the origin is in
--- the centre of the window and increases to the right and up. If the simulation
--- size is (100,100) with scale factor of 4, then the event coordinates are
--- returned in the range [-200,200].
---
-react :: Options -> Event -> World -> World
-react opt event world
-  = case event of
-      EventKey (Char c) s _ _           -> char (toLower c) s world
-      EventKey (SpecialKey c) s _ _     -> special c s world
-      _                                 -> world
-  where
-    char ';'            = toggle zooming In
-    char 'z'            = toggle zooming In
-    char 'q'            = toggle zooming Out
-    char 'x'            = toggle zooming Out
-    char 'd'            = precision Double
-    char 'f'            = precision Float
-    char _              = const id
-
-    special KeyUp       = toggle vertical Fwd
-    special KeyDown     = toggle vertical Rev
-    special KeyRight    = toggle horizontal Fwd
-    special KeyLeft     = toggle horizontal Rev
-    special _           = const id
-
-    toggle f x Down     = set f (Just x)
-    toggle f _ Up       = set f Nothing
-
-    precision f Down    = setPrecisionOfWorld f opt
-    precision _ _       = id
 
 
 -- Miscellaneous
