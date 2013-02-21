@@ -15,6 +15,7 @@
 #else
 #include <CL/opencl.h>
 #endif
+#include <vector>
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -33,12 +34,51 @@ namespace cl {
     // represents an OpenCL device.
     class device {
         cl_device_id id;
+
+        template<typename T>
+        T get_device_info(cl_device_info param) {
+            T t;
+            clGetDeviceInfo(id, param, sizeof(t), &t, NULL);
+            return t;
+        }
+
+        template<typename T>
+        std::vector<T> get_device_infos(cl_device_info param) {
+            size_t s;
+            clGetDeviceInfo(id, param, 0, NULL, &s);
+            
+            T *t = new T[s / sizeof(T)];
+            clGetDeviceInfo(id, param, s, t, NULL);
+            
+            std::vector<T> r;
+            for(int i = 0; i < s / sizeof(T); ++i)
+                r.push_back(t[i]);
+            
+            delete [] t;
+            return r;
+        }
+        
     public:
         device(cl_device_id id) : id(id) {}
         
         std::string name();
         cl_device_type type();
-        
+
+        int compute_units();
+        int max_subdevices();
+
+        int address_bits();
+        int global_cache_size();
+        //cl_device_mem_cache_type global_cache_type();
+        int global_cacheline_size();
+        int global_mem_size();
+        bool host_unified_memory();
+
+        int native_float_vector_width();
+
+        int max_work_group_size();
+        std::vector<size_t> max_work_item_dimensions();
+
         operator cl_device_id() const;
     };
 

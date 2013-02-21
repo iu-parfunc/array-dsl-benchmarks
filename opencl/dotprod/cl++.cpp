@@ -25,9 +25,49 @@ std::string device::name()
 
 cl_device_type device::type()
 {
-	cl_device_type t;
-	clGetDeviceInfo(id, CL_DEVICE_TYPE, sizeof(t), &t, NULL);
-	return t;
+    return get_device_info<cl_device_type>(CL_DEVICE_TYPE);
+}
+
+int device::address_bits() {
+    return get_device_info<cl_uint>(CL_DEVICE_ADDRESS_BITS);
+}
+
+int device::global_cache_size() {
+    return get_device_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_CACHE_SIZE);
+}
+
+int device::global_cacheline_size() {
+    return get_device_info<cl_uint>(CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE);
+}
+
+int device::global_mem_size() {
+    return get_device_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_SIZE);
+}
+
+bool device::host_unified_memory() {
+    return get_device_info<cl_bool>(CL_DEVICE_HOST_UNIFIED_MEMORY) == CL_TRUE
+        ? true : false;
+}
+
+int device::compute_units() {
+    return get_device_info<cl_uint>(CL_DEVICE_MAX_COMPUTE_UNITS);
+}
+
+int device::max_subdevices() {
+    return 0;
+    //return get_device_info<cl_uint>(CL_DEVICE_PARTITION_MAX_SUB_DEVICES);
+}
+
+int device::native_float_vector_width() {
+    return get_device_info<cl_uint>(CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT);
+}
+
+int device::max_work_group_size() {
+    return get_device_info<size_t>(CL_DEVICE_MAX_WORK_GROUP_SIZE);
+}
+
+vector<size_t> device::max_work_item_dimensions() {
+    return get_device_infos<size_t>(CL_DEVICE_MAX_WORK_ITEM_SIZES);
 }
 
 device::operator cl_device_id() const
