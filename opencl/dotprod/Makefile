@@ -1,3 +1,8 @@
+CXX=clang++
 
-dotprod: dotprod.cpp cl_error.cpp
-	clang++ -O --std=c++0x cl_error.cpp dotprod.cpp -o dotprod -lOpenCL
+CXXFLAGS = --std=c++0x -O
+
+LDFLAGS  = -framework OpenCL
+
+dotprod: dotprod.o cl++.o
+	clang++ -o dotprod dotprod.o cl++.o $(LDFLAGS)

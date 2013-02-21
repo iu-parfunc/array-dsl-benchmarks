@@ -1,5 +1,10 @@
 #include <stdio.h>
+
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 
 void handle_error(cl_int e) {
 #define HANDLE(x)                                           \
