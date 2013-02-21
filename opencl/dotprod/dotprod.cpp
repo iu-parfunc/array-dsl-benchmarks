@@ -8,24 +8,22 @@
 using namespace std;
 using namespace cl;
 
+const size_t N = 18000000;
+
 void print_device_info(device d);
 
 // Generate a random vector
-float *generate_vector(int N) {
-    float *v;
-    posix_memalign((void **)&v, 32, sizeof(float) * N);
-
-    for(int i = 0; i < N; ++i) {
-        v[i] = drand48();
-    }
-
-    return v;
+void fill_vector(float *v, int N) {
+  for(int i = 0; i < N; ++i) {
+	//v[i] = drand48();
+	v[i] = 1;
+  }
 }
 
 int main() {
-    device_list devs(CL_DEVICE_TYPE_CPU
-                     | CL_DEVICE_TYPE_GPU
-                     | CL_DEVICE_TYPE_ACCELERATOR
+  device_list devs(//CL_DEVICE_TYPE_CPU |
+                     CL_DEVICE_TYPE_GPU |
+                     CL_DEVICE_TYPE_ACCELERATOR
                      );
 
     cout << "Found " << devs.size() << " devices:" << endl;
@@ -35,11 +33,35 @@ int main() {
     auto dev = devs[0];
 
     context ctx(devs);
+	auto q = ctx.createCommandQueue(dev);
 
     auto prog = ctx.createProgramFromSourceFile("dotprod.cl");
 
     prog.build(dev);
 
+	auto x = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
+	auto y = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
+	auto z = ctx.createBuffer<float>(1, CL_MEM_WRITE_ONLY);
+
+	{
+	  auto xp = q.mapBuffer(x);
+	  auto yp = q.mapBuffer(y);
+	  fill_vector(xp, N);
+	  fill_vector(yp, N);
+	}
+
+	auto k = prog.createKernel("dotprod");
+	k.setArg(0, x);
+	k.setArg(1, y);
+	k.setArg(2, z);
+	k.setArg(3, N);
+
+	// LOCAL_SIZE needs to match LOCAL_SIZE in the kernel file.
+	const int LOCAL_SIZE = 256;
+	q.execute(k, LOCAL_SIZE, LOCAL_SIZE);
+
+	auto zp = q.mapBuffer(z);
+	cout << endl << "Result: " << *zp << endl;
 
     return 0;
 }
