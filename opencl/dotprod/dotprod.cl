@@ -21,14 +21,14 @@ __kernel void dotprod(__global float *x, __global float *y,
     }
 
     // Phase 2: sum up the temporary array
-    for(int j = LOCAL_SIZE / 2; j > 0; j >>= 1) {
+    for(int j = LOCAL_SIZE / 2; j >= CUTOFF; j >>= 1) {
         barrier(CLK_LOCAL_MEM_FENCE);
         if(i < j) {
             temp[i] += temp[i + j];
         }
     }
 
-    if(i == 0) {
-        z[block_id] = temp[0];
+    if(i < CUTOFF) {
+        z[block_id * CUTOFF + i] = temp[0];
     }
 }

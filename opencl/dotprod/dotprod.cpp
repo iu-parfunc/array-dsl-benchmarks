@@ -35,15 +35,18 @@ int dotprod(cl_device_type type, int LOCAL_SIZE) {
 
     auto prog = ctx.createProgramFromSourceFile("dotprod.cl");
 
+    const int CUTOFF = 1;
+
     stringstream options;
     options << "-DLOCAL_SIZE=" << LOCAL_SIZE;
+    options << " -DCUTOFF=" << CUTOFF;
     prog.build(dev, options.str());
 
     const int NUM_BLOCKS = 64;
 
 	auto x = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
 	auto y = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
-	auto z = ctx.createBuffer<float>(NUM_BLOCKS, CL_MEM_WRITE_ONLY);
+	auto z = ctx.createBuffer<float>(NUM_BLOCKS * CUTOFF, CL_MEM_WRITE_ONLY);
 
 	{
 	  auto xp = q.mapBuffer(x);
@@ -64,7 +67,7 @@ int dotprod(cl_device_type type, int LOCAL_SIZE) {
 
 	auto zp = q.mapBuffer(z);
     float total = 0;
-    for(int i = 0; i < NUM_BLOCKS; ++i) {
+    for(int i = 0; i < NUM_BLOCKS * CUTOFF; ++i) {
         total += zp[i];
     }
 	cout << endl << "Result: " << total << endl;
