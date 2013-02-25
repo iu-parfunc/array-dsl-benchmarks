@@ -8,7 +8,7 @@
 using namespace std;
 using namespace cl;
 
-const int N = 18000000;
+const int N = 33554432;
 
 void print_device_info(device d);
 
@@ -30,7 +30,7 @@ int main() {
     auto dev = devs[0];
 
     context ctx(devs);
-	auto q = ctx.createCommandQueue(dev);
+	auto q = ctx.createCommandQueue(dev, true);
 
     auto prog = ctx.createProgramFromSourceFile("dotprod.cl");
 
@@ -55,10 +55,16 @@ int main() {
 
 	// LOCAL_SIZE needs to match LOCAL_SIZE in the kernel file.
 	const int LOCAL_SIZE = 1024;
-	q.execute(k, LOCAL_SIZE, LOCAL_SIZE);
+	auto e = q.execute(k, LOCAL_SIZE, LOCAL_SIZE);
+    e.wait();
 
 	auto zp = q.mapBuffer(z);
 	cout << endl << "Result: " << *zp << endl;
+
+    auto start = e.get_start();
+    auto stop  = e.get_stop();
+
+    cout << "SELFTIMED " << double(stop - start) / 1e9 << endl;
 
     return 0;
 }

@@ -16,3 +16,7 @@ dotprod: $(OBJS)
 	rm -f $@.$$$$
 
 include $(subst .o,.d,$(OBJS))
+
+.phony: clean
+clean:
+	rm *.o *.d dotprod

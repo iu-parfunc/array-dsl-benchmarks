@@ -258,44 +258,36 @@ command_queue::~command_queue()
 	clReleaseCommandQueue(queue);
 }
 
-void command_queue::execute(kernel &k, size_t global_size)
+event command_queue::execute(kernel &k, size_t global_size)
 {
-	executeND(k, 1, &global_size, NULL);
+	return executeND(k, 1, &global_size, NULL);
 }
 
-void command_queue::execute(kernel &k, size_t global_size, size_t local_size)
+event command_queue::execute(kernel &k, size_t global_size, size_t local_size)
 {
-	executeND(k, 1, &global_size, &local_size);
+	return executeND(k, 1, &global_size, &local_size);
 }
 
-void command_queue::execute2d(kernel &k, size_t dim1, size_t dim2, size_t local_size)
+event command_queue::execute2d(kernel &k, size_t dim1,
+                               size_t dim2, size_t local_size)
 {
   size_t global_size[] = {dim1, dim2};
   size_t local_size_array[] = {local_size, local_size};  
-  executeND(k, 2, global_size, local_size_array);
+  return executeND(k, 2, global_size, local_size_array);
 }
 
-void command_queue::executeND(kernel &k, size_t dimensions,
-                              size_t global_size[], size_t local_size[])
+event command_queue::executeND(kernel &k, size_t dimensions,
+                               size_t global_size[], size_t local_size[])
 {
     cout << "Enqueuing " << dimensions << "-D kernel: (" << global_size[0];
     for(int i = 1; i < dimensions; ++i)
         cout << ", " << global_size[i];
     cout << ")" << endl;
 
-    // If any dimensions are 0, don't do anything. This may not be the
-    // best behavior, because it usually means something else went
-    // wrong in the calling program.
-    for(int i = 0; i < dimensions; ++i)
-        if(0 == global_size[i])
-            return;
-
 	cl_event e;
 	CL_CHECK(clEnqueueNDRangeKernel(queue, k.k, dimensions, NULL,
                                     global_size, local_size, 0, 0, &e));
-	CL_CHECK(clEnqueueBarrier(queue));
-	CL_CHECK(clWaitForEvents(1, &e));
-	CL_CHECK(clReleaseEvent(e));
+    return event(e);
 }
 
 program context::createProgramFromSourceFile(string filename)
@@ -370,6 +362,7 @@ string cl::format_status(cl_int e) {
         STATUS_STR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
         STATUS_STR(CL_OUT_OF_RESOURCES);
         STATUS_STR(CL_OUT_OF_HOST_MEMORY);
+        STATUS_STR(CL_PROFILING_INFO_NOT_AVAILABLE);
 
     default:
         stringstream s;
@@ -416,6 +409,7 @@ void cl::handle_error(const char *code, cl_int e)
     //HANDLE(CL_MISALIGNED_SUB_BUFFER_OFFSET);
     HANDLE(CL_OUT_OF_RESOURCES);
     HANDLE(CL_OUT_OF_HOST_MEMORY);
+    HANDLE(CL_PROFILING_INFO_NOT_AVAILABLE);
 
     cerr << code << " failed with unknown error (" << e << ")" << endl;
     abort();
@@ -435,7 +429,7 @@ void event::wait()
 
 uint64_t event::get_start()
 {
-    cl_uint t;
+    cl_ulong t;
     cl_int status = clGetEventProfilingInfo(e,
                                             CL_PROFILING_COMMAND_START,
                                             sizeof(t),
@@ -448,7 +442,7 @@ uint64_t event::get_start()
 
 uint64_t event::get_stop()
 {
-    cl_uint t;
+    cl_ulong t;
     cl_int status = clGetEventProfilingInfo(e,
                                             CL_PROFILING_COMMAND_END,
                                             sizeof(t),
