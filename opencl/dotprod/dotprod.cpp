@@ -8,23 +8,20 @@
 using namespace std;
 using namespace cl;
 
-const size_t N = 18000000;
+const int N = 18000000;
 
 void print_device_info(device d);
 
 // Generate a random vector
 void fill_vector(float *v, int N) {
-  for(int i = 0; i < N; ++i) {
-	//v[i] = drand48();
-	v[i] = 1;
-  }
+    for(int i = 0; i < N; ++i) {
+        //v[i] = drand48();
+        v[i] = 1;
+    }
 }
 
 int main() {
-  device_list devs(//CL_DEVICE_TYPE_CPU |
-                     CL_DEVICE_TYPE_GPU |
-                     CL_DEVICE_TYPE_ACCELERATOR
-                     );
+    device_list devs(CL_DEVICE_TYPE_GPU);
 
     cout << "Found " << devs.size() << " devices:" << endl;
     for(int i = 0; i < devs.size(); ++i)
@@ -57,7 +54,7 @@ int main() {
 	k.setArg(3, N);
 
 	// LOCAL_SIZE needs to match LOCAL_SIZE in the kernel file.
-	const int LOCAL_SIZE = 256;
+	const int LOCAL_SIZE = 1024;
 	q.execute(k, LOCAL_SIZE, LOCAL_SIZE);
 
 	auto zp = q.mapBuffer(z);

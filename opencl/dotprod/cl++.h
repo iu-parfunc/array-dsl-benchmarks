@@ -71,7 +71,7 @@ namespace cl {
         int global_cache_size();
         //cl_device_mem_cache_type global_cache_type();
         int global_cacheline_size();
-        int global_mem_size();
+        size_t global_mem_size();
         bool host_unified_memory();
 
         int native_float_vector_width();

@@ -40,7 +40,7 @@ int device::global_cacheline_size() {
     return get_device_info<cl_uint>(CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE);
 }
 
-int device::global_mem_size() {
+size_t device::global_mem_size() {
     return get_device_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_SIZE);
 }
 
@@ -278,10 +278,10 @@ void command_queue::execute2d(kernel &k, size_t dim1, size_t dim2, size_t local_
 void command_queue::executeND(kernel &k, size_t dimensions,
                               size_t global_size[], size_t local_size[])
 {
-    //cout << "Enqueuing " << dimensions << "-D kernel: (" << global_size[0];
-    //for(int i = 1; i < dimensions; ++i)
-    //    cout << ", " << global_size[i];
-    //cout << ")" << endl;
+    cout << "Enqueuing " << dimensions << "-D kernel: (" << global_size[0];
+    for(int i = 1; i < dimensions; ++i)
+        cout << ", " << global_size[i];
+    cout << ")" << endl;
 
     // If any dimensions are 0, don't do anything. This may not be the
     // best behavior, because it usually means something else went
