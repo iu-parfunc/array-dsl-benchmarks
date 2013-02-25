@@ -159,7 +159,7 @@ namespace cl {
     public:
         ~program();
         
-        void build(device dev);
+        void build(device dev, std::string options = "");
         
         kernel createKernel(std::string name);
     };

@@ -1,9 +1,5 @@
 /* -*- C -*- */
 
-// This preprocessor define should actually be provided by the calling
-// program.
-#define LOCAL_SIZE 1024
-
 __kernel void dotprod(__global float *x, __global float *y,
 					  __global float *z, int N)
 {

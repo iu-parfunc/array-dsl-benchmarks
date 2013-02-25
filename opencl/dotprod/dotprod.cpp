@@ -1,6 +1,7 @@
 #define __CL_ENABLE_EXCEPTIONS
 
 #include <iostream>
+#include <sstream>
 #include <stdlib.h>
 
 #include "cl++.h"
@@ -20,8 +21,8 @@ void fill_vector(float *v, int N) {
     }
 }
 
-int main() {
-    device_list devs(CL_DEVICE_TYPE_GPU);
+int dotprod(cl_device_type type, int LOCAL_SIZE) {
+    device_list devs(type);
 
     cout << "Found " << devs.size() << " devices:" << endl;
     for(int i = 0; i < devs.size(); ++i)
@@ -34,7 +35,9 @@ int main() {
 
     auto prog = ctx.createProgramFromSourceFile("dotprod.cl");
 
-    prog.build(dev);
+    stringstream options;
+    options << "-DLOCAL_SIZE=" << LOCAL_SIZE;
+    prog.build(dev, options.str());
 
 	auto x = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
 	auto y = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
@@ -54,7 +57,6 @@ int main() {
 	k.setArg(3, N);
 
 	// LOCAL_SIZE needs to match LOCAL_SIZE in the kernel file.
-	const int LOCAL_SIZE = 1024;
 	auto e = q.execute(k, LOCAL_SIZE, LOCAL_SIZE);
     e.wait();
 

@@ -215,12 +215,15 @@ string escape_path(const char *s) {
   return e;
 }
 
-void program::build(device dev)
+void program::build(device dev, string options)
 {
     char *cwd = ::getcwd(NULL, 0);
     string opts = "-I";
     opts += escape_path(cwd);
     // opts += " -Werror";
+
+    opts += " " + options;
+
     free(cwd);
     cl_int status = clBuildProgram(prog, 0, NULL, opts.c_str(), NULL, NULL);
     if(status != CL_SUCCESS) {
