@@ -283,7 +283,8 @@ namespace cl {
         program createProgramFromSourceFile(std::string filename);
         program createProgramFromSource(std::string source);
         
-        command_queue createCommandQueue(cl_device_id dev);
+        command_queue createCommandQueue(cl_device_id dev,
+                                         bool profiling = false);
         
         operator cl_context() const { return ctx; }
 
@@ -323,4 +324,19 @@ namespace cl {
                              NULL);
         return *this;
     }
+
+    class event {
+        friend command_queue;
+
+        cl_event e;
+        
+        event(cl_event e);
+    public:
+        ~event();
+
+        void wait();
+
+        uint64_t get_start();
+        uint64_t get_stop();
+    };
 }

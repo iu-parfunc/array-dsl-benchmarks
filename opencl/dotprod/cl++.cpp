@@ -324,14 +324,16 @@ program context::createProgramFromSource(string src)
   return program(p);
 }
 
-command_queue context::createCommandQueue(cl_device_id dev)
+command_queue context::createCommandQueue(cl_device_id dev,
+                                          bool profiling)
 {
 	cl_int status;
 
-	cl_command_queue q = clCreateCommandQueue(ctx,
-						  dev,
-						  0, // properties
-						  &status);
+	cl_command_queue q =
+        clCreateCommandQueue(ctx,
+                             dev,
+                             profiling ? CL_QUEUE_PROFILING_ENABLE : 0,
+                             &status);
 	CL_CHECK(status);
 	return command_queue(q);
 }
@@ -417,4 +419,42 @@ void cl::handle_error(const char *code, cl_int e)
 
     cerr << code << " failed with unknown error (" << e << ")" << endl;
     abort();
+}
+
+event::event(cl_event e) : e(e) {}
+
+event::~event()
+{
+    CL_CHECK(clReleaseEvent(e));
+}
+
+void event::wait()
+{
+    CL_CHECK(clWaitForEvents(1, &e));
+}
+
+uint64_t event::get_start()
+{
+    cl_uint t;
+    cl_int status = clGetEventProfilingInfo(e,
+                                            CL_PROFILING_COMMAND_START,
+                                            sizeof(t),
+                                            &t,
+                                            NULL);
+    CL_CHECK(status);
+
+    return t;
+}
+
+uint64_t event::get_stop()
+{
+    cl_uint t;
+    cl_int status = clGetEventProfilingInfo(e,
+                                            CL_PROFILING_COMMAND_END,
+                                            sizeof(t),
+                                            &t,
+                                            NULL);
+    CL_CHECK(status);
+
+    return t;
 }
