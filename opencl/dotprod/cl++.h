@@ -71,7 +71,7 @@ namespace cl {
         int global_cache_size();
         //cl_device_mem_cache_type global_cache_type();
         int global_cacheline_size();
-        int global_mem_size();
+        size_t global_mem_size();
         bool host_unified_memory();
 
         int native_float_vector_width();
@@ -159,7 +159,7 @@ namespace cl {
     public:
         ~program();
         
-        void build(device dev);
+        void build(device dev, std::string options = "");
         
         kernel createKernel(std::string name);
     };
@@ -191,7 +191,23 @@ namespace cl {
         
         operator T*() { return ptr; };
     };
-    
+
+    // OpenCL Event
+    class event {
+        friend class command_queue;
+
+        cl_event e;
+        
+        event(cl_event e);
+    public:
+        ~event();
+
+        void wait();
+
+        uint64_t get_start();
+        uint64_t get_stop();
+    };
+
     // OpenCL Command Queue
     class command_queue {
         friend class context;
@@ -224,11 +240,11 @@ namespace cl {
         }
         
         // Enqueues the kernel and waits for it to complete.
-        void execute(kernel &k, size_t global_size);
-        void execute(kernel &k, size_t global_size, size_t local_size);
-        void execute2d(kernel &k, size_t dim1, size_t dim2, size_t local_size);
-        void executeND(kernel &k, size_t dimensions, size_t global_size[], 
-                       size_t local_size[]);
+        event execute(kernel &k, size_t global_size);
+        event execute(kernel &k, size_t global_size, size_t local_size);
+        event execute2d(kernel &k, size_t dim1, size_t dim2, size_t local_size);
+        event executeND(kernel &k, size_t dimensions, size_t global_size[], 
+                        size_t local_size[]);
 
         template<typename T>
         void write_buffer(buffer<T> &b, T *data) {
@@ -283,7 +299,8 @@ namespace cl {
         program createProgramFromSourceFile(std::string filename);
         program createProgramFromSource(std::string source);
         
-        command_queue createCommandQueue(cl_device_id dev);
+        command_queue createCommandQueue(cl_device_id dev,
+                                         bool profiling = false);
         
         operator cl_context() const { return ctx; }
 

@@ -40,7 +40,7 @@ int device::global_cacheline_size() {
     return get_device_info<cl_uint>(CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE);
 }
 
-int device::global_mem_size() {
+size_t device::global_mem_size() {
     return get_device_info<cl_ulong>(CL_DEVICE_GLOBAL_MEM_SIZE);
 }
 
@@ -215,12 +215,15 @@ string escape_path(const char *s) {
   return e;
 }
 
-void program::build(device dev)
+void program::build(device dev, string options)
 {
     char *cwd = ::getcwd(NULL, 0);
     string opts = "-I";
     opts += escape_path(cwd);
     // opts += " -Werror";
+
+    opts += " " + options;
+
     free(cwd);
     cl_int status = clBuildProgram(prog, 0, NULL, opts.c_str(), NULL, NULL);
     if(status != CL_SUCCESS) {
@@ -258,44 +261,36 @@ command_queue::~command_queue()
 	clReleaseCommandQueue(queue);
 }
 
-void command_queue::execute(kernel &k, size_t global_size)
+event command_queue::execute(kernel &k, size_t global_size)
 {
-	executeND(k, 1, &global_size, NULL);
+	return executeND(k, 1, &global_size, NULL);
 }
 
-void command_queue::execute(kernel &k, size_t global_size, size_t local_size)
+event command_queue::execute(kernel &k, size_t global_size, size_t local_size)
 {
-	executeND(k, 1, &global_size, &local_size);
+	return executeND(k, 1, &global_size, &local_size);
 }
 
-void command_queue::execute2d(kernel &k, size_t dim1, size_t dim2, size_t local_size)
+event command_queue::execute2d(kernel &k, size_t dim1,
+                               size_t dim2, size_t local_size)
 {
   size_t global_size[] = {dim1, dim2};
   size_t local_size_array[] = {local_size, local_size};  
-  executeND(k, 2, global_size, local_size_array);
+  return executeND(k, 2, global_size, local_size_array);
 }
 
-void command_queue::executeND(kernel &k, size_t dimensions,
-                              size_t global_size[], size_t local_size[])
+event command_queue::executeND(kernel &k, size_t dimensions,
+                               size_t global_size[], size_t local_size[])
 {
-    //cout << "Enqueuing " << dimensions << "-D kernel: (" << global_size[0];
-    //for(int i = 1; i < dimensions; ++i)
-    //    cout << ", " << global_size[i];
-    //cout << ")" << endl;
-
-    // If any dimensions are 0, don't do anything. This may not be the
-    // best behavior, because it usually means something else went
-    // wrong in the calling program.
-    for(int i = 0; i < dimensions; ++i)
-        if(0 == global_size[i])
-            return;
+    cout << "Enqueuing " << dimensions << "-D kernel: (" << global_size[0];
+    for(int i = 1; i < dimensions; ++i)
+        cout << ", " << global_size[i];
+    cout << ")" << endl;
 
 	cl_event e;
 	CL_CHECK(clEnqueueNDRangeKernel(queue, k.k, dimensions, NULL,
                                     global_size, local_size, 0, 0, &e));
-	CL_CHECK(clEnqueueBarrier(queue));
-	CL_CHECK(clWaitForEvents(1, &e));
-	CL_CHECK(clReleaseEvent(e));
+    return event(e);
 }
 
 program context::createProgramFromSourceFile(string filename)
@@ -324,14 +319,16 @@ program context::createProgramFromSource(string src)
   return program(p);
 }
 
-command_queue context::createCommandQueue(cl_device_id dev)
+command_queue context::createCommandQueue(cl_device_id dev,
+                                          bool profiling)
 {
 	cl_int status;
 
-	cl_command_queue q = clCreateCommandQueue(ctx,
-						  dev,
-						  0, // properties
-						  &status);
+	cl_command_queue q =
+        clCreateCommandQueue(ctx,
+                             dev,
+                             profiling ? CL_QUEUE_PROFILING_ENABLE : 0,
+                             &status);
 	CL_CHECK(status);
 	return command_queue(q);
 }
@@ -368,6 +365,7 @@ string cl::format_status(cl_int e) {
         STATUS_STR(CL_MEM_OBJECT_ALLOCATION_FAILURE);
         STATUS_STR(CL_OUT_OF_RESOURCES);
         STATUS_STR(CL_OUT_OF_HOST_MEMORY);
+        STATUS_STR(CL_PROFILING_INFO_NOT_AVAILABLE);
 
     default:
         stringstream s;
@@ -414,7 +412,46 @@ void cl::handle_error(const char *code, cl_int e)
     //HANDLE(CL_MISALIGNED_SUB_BUFFER_OFFSET);
     HANDLE(CL_OUT_OF_RESOURCES);
     HANDLE(CL_OUT_OF_HOST_MEMORY);
+    HANDLE(CL_PROFILING_INFO_NOT_AVAILABLE);
 
     cerr << code << " failed with unknown error (" << e << ")" << endl;
     abort();
+}
+
+event::event(cl_event e) : e(e) {}
+
+event::~event()
+{
+    CL_CHECK(clReleaseEvent(e));
+}
+
+void event::wait()
+{
+    CL_CHECK(clWaitForEvents(1, &e));
+}
+
+uint64_t event::get_start()
+{
+    cl_ulong t;
+    cl_int status = clGetEventProfilingInfo(e,
+                                            CL_PROFILING_COMMAND_START,
+                                            sizeof(t),
+                                            &t,
+                                            NULL);
+    CL_CHECK(status);
+
+    return t;
+}
+
+uint64_t event::get_stop()
+{
+    cl_ulong t;
+    cl_int status = clGetEventProfilingInfo(e,
+                                            CL_PROFILING_COMMAND_END,
+                                            sizeof(t),
+                                            &t,
+                                            NULL);
+    CL_CHECK(status);
+
+    return t;
 }

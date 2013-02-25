@@ -1,31 +1,35 @@
 /* -*- C -*- */
 
-// This preprocessor define should actually be provided by the calling
-// program.
-#define LOCAL_SIZE 256
-
 __kernel void dotprod(__global float *x, __global float *y,
 					  __global float *z, int N)
 {
-  __local float temp[LOCAL_SIZE];
+    size_t num_groups = get_num_groups(0);
+    int block_size = (N + num_groups - 1) / num_groups;
+    int block_id = get_global_id(0) / get_local_size(0);
+   
+    int block_start = block_id * block_size;
+    int block_end = min(block_start + block_size, N);
 
-  int i = get_global_id(0);
-  temp[i] = 0;
+    __local float temp[LOCAL_SIZE];
 
-  // Phase 1: reduce down to a size that fits in local memory.
-  for(int j = i; j < N; j += LOCAL_SIZE) {
-	temp[i] += x[j] * y[j];
-  }
+    int i = get_local_id(0);
 
-  // Phase 2: sum up the temporary array
-  for(int j = LOCAL_SIZE / 2; j > 0; j >>= 1) {
-	if(i < j) {
-	  temp[i] += temp[i + j];
-	}
-	barrier(CLK_LOCAL_MEM_FENCE);
-  }
+    // Phase 1: reduce down to a size that fits in local memory.
+    float t = 0;
+    for(int j = block_start + i; j < block_end; j += LOCAL_SIZE) {
+        t += x[j] * y[j];
+    }
+    temp[i] = t;
 
-  if(i == 0) {
-	*z = temp[0];
-  }
+    // Phase 2: sum up the temporary array
+    for(int j = LOCAL_SIZE / 2; j >= CUTOFF; j >>= 1) {
+        barrier(CLK_LOCAL_MEM_FENCE);
+        if(i < j) {
+            temp[i] += temp[i + j];
+        }
+    }
+
+    if(i < CUTOFF) {
+        z[block_id * CUTOFF + i] = temp[0];
+    }
 }

@@ -1,6 +1,7 @@
 #define __CL_ENABLE_EXCEPTIONS
 
 #include <iostream>
+#include <sstream>
 #include <stdlib.h>
 
 #include "cl++.h"
@@ -8,23 +9,20 @@
 using namespace std;
 using namespace cl;
 
-const size_t N = 18000000;
+const int N = 33554432;
 
 void print_device_info(device d);
 
 // Generate a random vector
 void fill_vector(float *v, int N) {
-  for(int i = 0; i < N; ++i) {
-	//v[i] = drand48();
-	v[i] = 1;
-  }
+    for(int i = 0; i < N; ++i) {
+        //v[i] = drand48();
+        v[i] = 1;
+    }
 }
 
-int main() {
-  device_list devs(//CL_DEVICE_TYPE_CPU |
-                     CL_DEVICE_TYPE_GPU |
-                     CL_DEVICE_TYPE_ACCELERATOR
-                     );
+int dotprod(cl_device_type type, int LOCAL_SIZE) {
+    device_list devs(type);
 
     cout << "Found " << devs.size() << " devices:" << endl;
     for(int i = 0; i < devs.size(); ++i)
@@ -33,15 +31,22 @@ int main() {
     auto dev = devs[0];
 
     context ctx(devs);
-	auto q = ctx.createCommandQueue(dev);
+	auto q = ctx.createCommandQueue(dev, true);
 
     auto prog = ctx.createProgramFromSourceFile("dotprod.cl");
 
-    prog.build(dev);
+    const int CUTOFF = 1;
+
+    stringstream options;
+    options << "-DLOCAL_SIZE=" << LOCAL_SIZE;
+    options << " -DCUTOFF=" << CUTOFF;
+    prog.build(dev, options.str());
+
+    const int NUM_BLOCKS = 64;
 
 	auto x = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
 	auto y = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
-	auto z = ctx.createBuffer<float>(1, CL_MEM_WRITE_ONLY);
+	auto z = ctx.createBuffer<float>(NUM_BLOCKS * CUTOFF, CL_MEM_WRITE_ONLY);
 
 	{
 	  auto xp = q.mapBuffer(x);
@@ -57,11 +62,20 @@ int main() {
 	k.setArg(3, N);
 
 	// LOCAL_SIZE needs to match LOCAL_SIZE in the kernel file.
-	const int LOCAL_SIZE = 256;
-	q.execute(k, LOCAL_SIZE, LOCAL_SIZE);
+	auto e = q.execute(k, LOCAL_SIZE * NUM_BLOCKS, LOCAL_SIZE);
+    e.wait();
 
 	auto zp = q.mapBuffer(z);
-	cout << endl << "Result: " << *zp << endl;
+    float total = 0;
+    for(int i = 0; i < NUM_BLOCKS * CUTOFF; ++i) {
+        total += zp[i];
+    }
+	cout << endl << "Result: " << total << endl;
+
+    auto start = e.get_start();
+    auto stop  = e.get_stop();
+
+    cout << "SELFTIMED " << double(stop - start) / 1e9 << endl;
 
     return 0;
 }
