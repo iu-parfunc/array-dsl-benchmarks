@@ -1,5 +1,4 @@
 
-
 Benchmark specification: N-body naive
 =====================================
 
@@ -40,12 +39,12 @@ following improvements:
 Optional improvements to algorithm
 ----------------------------------
 
- (1) Manual elimination of intermediates: if your language of choice does not
+ * (1) Manual elimination of intermediates: if your language of choice does not
    eliminate (fuse/deforest) the intermediate matrices, you are encouraged to
    make an additional version which performs the cartesian product (or even the
    cartesian product + fold) in a single step.
    
- (2) Eliminate redundant computation: if your array language supports it, you may
+ * (2) Eliminate redundant computation: if your array language supports it, you may
    perform the acceleration computations *only* for the upper/lower triangular
    matrix (and not the diagonal).  This eliminates the need to hedge against
    divide-by-zero in the scalar `accel` function.  The triangular matrix should
@@ -81,15 +80,14 @@ the forces need to be within an error bound of 10-6, i.e.,
   `|(F - F')/|F|| < 10-6`, 
 where F is the actual force and F' the reported force.
 
- * Points selected at random uniformly within a unit sphere.
+ Points selected at random uniformly within a unit sphere:
  
     uniform -s -d 3 <n> <filename>
 
- * Points selected at random from the Plummer distribution.
+ Points selected at random from the Plummer distribution:
  
     plummer -d 3 <n> <filename>
     
- * Points selected at random uniformly on the surface of a unit sphere.
+ Points selected at random uniformly on the surface of a unit sphere:
  
     uniform -S -d 3 <n> <filename>
-
