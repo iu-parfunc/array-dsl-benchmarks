@@ -13,12 +13,13 @@ __kernel void dotprod(__global float *x, __global float *y,
     __local float temp[LOCAL_SIZE];
 
     int i = get_local_id(0);
-    temp[i] = 0;
 
     // Phase 1: reduce down to a size that fits in local memory.
+    float t = 0;
     for(int j = block_start + i; j < block_end; j += LOCAL_SIZE) {
-        temp[i] += x[j] * y[j];
+        t += x[j] * y[j];
     }
+    temp[i] = t;
 
     // Phase 2: sum up the temporary array
     for(int j = LOCAL_SIZE / 2; j >= CUTOFF; j >>= 1) {
