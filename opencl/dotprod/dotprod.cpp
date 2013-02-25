@@ -39,9 +39,11 @@ int dotprod(cl_device_type type, int LOCAL_SIZE) {
     options << "-DLOCAL_SIZE=" << LOCAL_SIZE;
     prog.build(dev, options.str());
 
+    const int NUM_BLOCKS = 64;
+
 	auto x = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
 	auto y = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
-	auto z = ctx.createBuffer<float>(1, CL_MEM_WRITE_ONLY);
+	auto z = ctx.createBuffer<float>(NUM_BLOCKS, CL_MEM_WRITE_ONLY);
 
 	{
 	  auto xp = q.mapBuffer(x);
@@ -57,11 +59,15 @@ int dotprod(cl_device_type type, int LOCAL_SIZE) {
 	k.setArg(3, N);
 
 	// LOCAL_SIZE needs to match LOCAL_SIZE in the kernel file.
-	auto e = q.execute(k, LOCAL_SIZE, LOCAL_SIZE);
+	auto e = q.execute(k, LOCAL_SIZE * NUM_BLOCKS, LOCAL_SIZE);
     e.wait();
 
 	auto zp = q.mapBuffer(z);
-	cout << endl << "Result: " << *zp << endl;
+    float total = 0;
+    for(int i = 0; i < NUM_BLOCKS; ++i) {
+        total += zp[i];
+    }
+	cout << endl << "Result: " << total << endl;
 
     auto start = e.get_start();
     auto stop  = e.get_stop();
