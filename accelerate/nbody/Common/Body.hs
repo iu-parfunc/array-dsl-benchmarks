@@ -8,14 +8,15 @@ module Common.Body (
   Velocity, Accel, PointMass, Body,
 
   -- * Calculations
-  accel, advanceBody,
+  accel,
+  -- advanceBody,
 
   -- ** Getters
-  pointMassOfBody, velocityOfBody, accelOfBody, positionOfPointMass,
-  massOfPointMass,
+  -- pointMassOfBody, velocityOfBody, accelOfBody, positionOfPointMass,
+  -- massOfPointMass,
 
   -- ** Setters
-  unitBody, setMassOfBody, setAccelOfBody, setStartVelOfBody,
+--  unitBody, setMassOfBody, setAccelOfBody, setStartVelOfBody,
 
 ) where
 
@@ -36,10 +37,10 @@ accel   :: Exp R                -- ^ Smoothing parameter
         -> Exp Accel
 
 accel epsilon body1 body2
-  = lift (aabs * dx / r , aabs * dy / r)
+  = lift (aabs * dx / r , aabs * dy / r, aabs * dz / r)
   where
-    (x1, y1)    = unlift $ positionOfPointMass mp1
-    (x2, y2)    = unlift $ positionOfPointMass mp2
+    (x1, y1, z1) = unlift $ positionOfPointMass mp1
+    (x2, y2, z2) = unlift $ positionOfPointMass mp2
     mp1         = pointMassOfBody body1
     mp2         = pointMassOfBody body2
     m1          = massOfPointMass mp1
@@ -47,13 +48,16 @@ accel epsilon body1 body2
 
     dx          = x1 - x2
     dy          = y1 - y2
-    rsqr        = (dx * dx) + (dy * dy) + epsilon * epsilon
+    dz          = z1 - z2
+    rsqr        = (dx * dx) + (dy * dy) + (dz * dz)
     aabs        = (m1 + m2) / rsqr
     r           = sqrt rsqr
 
 
 -- Body ------------------------------------------------------------------------
 --
+
+{-
 
 -- | Make a stationary Body of unit mass
 --
@@ -64,14 +68,6 @@ unitBody x y = lift (pointmass, constant (0,0), constant (0,0))
     pointmass   = lift (pos, constant 1)        :: Exp PointMass
 
 
--- | Take the Velocity of a Body
---
-velocityOfBody :: Exp Body -> Exp Velocity
-velocityOfBody body = vel
-  where
-    (_, vel, _) = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
-
-
 -- | Take the Acceleration of a Body
 --
 accelOfBody :: Exp Body -> Exp Accel
@@ -79,22 +75,6 @@ accelOfBody body = acc
   where
     (_, _, acc) = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
 
-
--- | Take the PointMass of a Body
---
-pointMassOfBody :: Exp Body -> Exp PointMass
-pointMassOfBody body = mp
-  where
-    (mp, _, _)  = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
-
-
--- | Take the position or mass of a PointMass
---
-positionOfPointMass :: Exp PointMass -> Exp Position
-positionOfPointMass = A.fst
-
-massOfPointMass :: Exp PointMass -> Exp Mass
-massOfPointMass = A.snd
 
 
 -- | Set the mass of a Body.
@@ -151,3 +131,28 @@ advanceBody time body = lift ( pm', vel', acc )
     pos'        = lift (px + time * vx, py + time * vy) :: Exp Velocity
     vel'        = lift (vx + time * ax, vy + time * ay) :: Exp Accel
 
+-}
+
+-- | Take the position or mass of a PointMass
+--
+positionOfPointMass :: Exp PointMass -> Exp Position
+positionOfPointMass = A.fst
+
+massOfPointMass :: Exp PointMass -> Exp Mass
+massOfPointMass = A.snd
+
+
+-- | Take the PointMass of a Body
+--
+pointMassOfBody :: Exp Body -> Exp PointMass
+pointMassOfBody body = mp
+  where
+    (mp, _, _)  = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
+
+
+-- | Take the Velocity of a Body
+--
+velocityOfBody :: Exp Body -> Exp Velocity
+velocityOfBody body = vel
+  where
+    (_, vel, _) = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
