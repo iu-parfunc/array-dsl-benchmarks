@@ -43,7 +43,7 @@ __kernel void zip_force(__global double3 *left,
         
         double d = mag(a - b);
         if(d > 0)
-            force[i * NUM_BODIES + j] = (a - b) / (d * d);
+            force[i * NUM_BODIES + j] = (a - b) / (d * d * d);
     }
 }
 
