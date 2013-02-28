@@ -61,3 +61,25 @@ __kernel void fold_force(__global double3 *force,
 
     out[i] = total;
 }
+
+// A unified version of the previous kernels. Uses way less memory and
+// should be much faster.
+__kernel void nbody_opt(__global double3 *points,
+						__global double3 *forces)
+{
+	int i = get_global_id(0);
+	
+	if(i >= NUM_BODIES) return;
+
+	double3 total = (double3)(0, 0, 0);
+	double3 a = points[i];
+	for(int j = 0; j < NUM_BODIES; j++) {
+		double3 b = points[j];
+
+		double d = mag(a - b);
+		if(d > 0)
+			total += (a - b) / (d * d * d);
+	}
+
+	forces[i] = total;
+}

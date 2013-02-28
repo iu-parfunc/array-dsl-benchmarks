@@ -1,6 +1,6 @@
-CXX=clang++
+CXX=g++
 
-CXXFLAGS = --std=c++0x -O -I../common
+CXXFLAGS = --std=c++0x -O -I../common -I/usr/local/cuda/include -DOPTIMIZED
 
 ifeq ($(shell uname), Darwin)
 	LDFLAGS  = -framework OpenCL
@@ -14,10 +14,10 @@ OBJS = nbody.o ../common/cl++.o
 all: nbody-cpu nbody-gpu
 
 nbody-cpu: $(OBJS) nbody-cpu.cpp
-	clang++ -o nbody-cpu nbody-cpu.cpp $(OBJS) $(LDFLAGS)
+	$(CXX) -o nbody-cpu nbody-cpu.cpp $(OBJS) $(LDFLAGS) $(CXXFLAGS)
 
 nbody-gpu: $(OBJS) nbody-gpu.cpp
-	clang++ -o nbody-gpu nbody-gpu.cpp $(OBJS) $(LDFLAGS)
+	$(CXX) -o nbody-gpu nbody-gpu.cpp $(OBJS) $(LDFLAGS) $(CXXFLAGS)
 
 %.d: %.cpp
 	$(CXX) -M $(CPPFLAGS) $(CXXFLAGS) $< > $@.$$$$;                 \

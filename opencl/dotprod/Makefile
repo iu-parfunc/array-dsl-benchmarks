@@ -1,6 +1,7 @@
-CXX=clang++
+#CXX=clang++
+CXX=g++
 
-CXXFLAGS = --std=c++0x -O -I../common
+CXXFLAGS = --std=c++0x -O -I../common -I/usr/local/cuda/include
 
 #LDFLAGS  = -framework OpenCL
 LDFLAGS = -lOpenCL
@@ -11,10 +12,10 @@ OBJS = dotprod.o ../common/cl++.o
 all: dotprod-cpu dotprod-gpu
 
 dotprod-cpu: $(OBJS) dotprod-cpu.cpp
-	clang++ -o dotprod-cpu dotprod-cpu.cpp $(OBJS) $(LDFLAGS)
+	$(CXX) -o dotprod-cpu dotprod-cpu.cpp $(OBJS) $(LDFLAGS) $(CXXFLAGS)
 
 dotprod-gpu: $(OBJS) dotprod-gpu.cpp
-	clang++ -o dotprod-gpu dotprod-gpu.cpp $(OBJS) $(LDFLAGS)
+	$(CXX) -o dotprod-gpu dotprod-gpu.cpp $(OBJS) $(LDFLAGS) $(CXXFLAGS)
 
 %.d: %.cpp
 	$(CXX) -M $(CPPFLAGS) $(CXXFLAGS) $< > $@.$$$$;                 \

@@ -1,4 +1,4 @@
-#include <CL/cl.h>
+#include <CL/opencl.h>
 
 // in dotprod.cpp
 int dotprod(cl_device_type type, int LOCAL_SIZE);

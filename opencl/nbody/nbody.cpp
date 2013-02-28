@@ -10,7 +10,7 @@ using namespace std;
 using namespace cl;
 
 //const int N = 2949;
-const int N = 1500;
+const int N = 10000;
 
 void print_device_info(device d);
 
@@ -52,22 +52,24 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
     const int NUM_BLOCKS = (N + LOCAL_SIZE - 1) / LOCAL_SIZE;
 
 	auto points = ctx.createBuffer<cl_double3>(N);
-    auto point_cols = ctx.createBuffer<cl_double3>(N * N);
-    auto point_rows = ctx.createBuffer<cl_double3>(N * N);
-    auto force_mat = ctx.createBuffer<cl_double3>(N * N);
-    auto forces = ctx.createBuffer<cl_double3>(N);
-
 	{
 	  auto xp = q.mapBuffer(points);
 	  fill_vector(xp, N);
 	}
+    auto forces = ctx.createBuffer<cl_double3>(N);
+
+    auto global_size = LOCAL_SIZE * NUM_BLOCKS;
 
 #define LOAD_KERNEL(x) auto x = prog.createKernel(#x)
+#ifndef OPTIMIZED
+    auto point_cols = ctx.createBuffer<cl_double3>(N * N);
+    auto point_rows = ctx.createBuffer<cl_double3>(N * N);
+    auto force_mat = ctx.createBuffer<cl_double3>(N * N);
+
     LOAD_KERNEL(replicate_rows);
     LOAD_KERNEL(replicate_cols);
     LOAD_KERNEL(zip_force);
     LOAD_KERNEL(fold_force);
-#undef LOAD_KERNEL
 
     replicate_rows.setArg(0, points);
     replicate_rows.setArg(1, point_rows);
@@ -81,8 +83,6 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
 
     fold_force.setArg(0, force_mat);
     fold_force.setArg(1, forces);
-
-    auto global_size = LOCAL_SIZE * NUM_BLOCKS;
 
     auto rep_row_e = q.execute2d(replicate_rows,
                                  global_size, global_size,
@@ -100,10 +100,23 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
     auto force_e = q.executeAfter(fold_force,
                                   global_size, LOCAL_SIZE,
                                   zip_e);
-
     force_e.wait();
 
     auto start = min(rep_row_e.get_start(), rep_col_e.get_start());
+
+#else
+	LOAD_KERNEL(nbody_opt);
+
+	nbody_opt.setArg(0, points);
+	nbody_opt.setArg(1, forces);
+
+	auto force_e = q.execute(nbody_opt, global_size, LOCAL_SIZE);
+	force_e.wait();
+
+	auto start = force_e.get_start();
+#endif
+#undef LOAD_KERNEL
+
     auto stop  = force_e.get_stop();
 
     cout << "SELFTIMED " << double(stop - start) / 1e9 << endl;
