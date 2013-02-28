@@ -1,35 +1,55 @@
 /* -*- C -*- */
 
-__kernel void dotprod(__global float *x, __global float *y,
-					  __global float *z, int N)
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
+__kernel void replicate_rows(__global double3 *points,
+                             __global double3 *output)
 {
-    size_t num_groups = get_num_groups(0);
-    int block_size = (N + num_groups - 1) / num_groups;
-    int block_id = get_global_id(0) / get_local_size(0);
-   
-    int block_start = block_id * block_size;
-    int block_end = min(block_start + block_size, N);
+    int i = get_global_id(1);
+    int j = get_global_id(0);
 
-    __local float temp[LOCAL_SIZE];
+    if(i < N && j < N)
+        output[i * N + j] = points[i];
+}
 
-    int i = get_local_id(0);
+__kernel void replicate_cols(__global double3 *points,
+                             __global double3 *output)
+{
+    int i = get_global_id(1);
+    int j = get_global_id(0);
 
-    // Phase 1: reduce down to a size that fits in local memory.
-    float t = 0;
-    for(int j = block_start + i; j < block_end; j += LOCAL_SIZE) {
-        t += x[j] * y[j];
+    if(i < N && j < N)
+        output[i * N + j] = points[j];
+}
+
+__kernel void zip_force(__global double3 *left,
+                        __global double3 *right,
+                        __global double3 *force)
+{
+    int i = get_global_id(1);
+    int j = get_global_id(0);
+
+    if(i < N && j < N) {
+        double3 a = left[i * N + j];
+        double3 b = right[i * N + j];
+        
+        double d = length(a - b);
+        if(d > 0)
+            force[i * N + j] = (a - b) / (d * d);
     }
-    temp[i] = t;
+}
 
-    // Phase 2: sum up the temporary array
-    for(int j = LOCAL_SIZE / 2; j >= CUTOFF; j >>= 1) {
-        barrier(CLK_LOCAL_MEM_FENCE);
-        if(i < j) {
-            temp[i] += temp[i + j];
-        }
+__kernel void fold_force(__global double3 *force,
+                         __global double3 *out)
+{
+    int i = get_global_id(0);
+
+    if(i >= N) return;
+
+    double3 total = (double3)(0, 0, 0);
+    for(int j = 0; j < N; j++) {
+        total += force[i * N + j];
     }
 
-    if(i < CUTOFF) {
-        z[block_id * CUTOFF + i] = temp[0];
-    }
+    out[i] = total;
 }

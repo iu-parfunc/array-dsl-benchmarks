@@ -243,8 +243,21 @@ namespace cl {
         event execute(kernel &k, size_t global_size);
         event execute(kernel &k, size_t global_size, size_t local_size);
         event execute2d(kernel &k, size_t dim1, size_t dim2, size_t local_size);
-        event executeND(kernel &k, size_t dimensions, size_t global_size[], 
-                        size_t local_size[]);
+        event executeND(kernel &k, size_t dimensions,
+                        size_t global_size[], size_t local_size[],
+                        int num_events = 0, cl_event *events = NULL);
+
+        event executeAfter(kernel &k, size_t global_size, size_t local_size,
+                           event &e);
+        event execute2dAfter(kernel &k,
+                             size_t dim1, size_t dim2,
+                             size_t local_size,
+                             event &e);
+        event execute2dAfter(kernel &k,
+                             size_t dim1, size_t dim2,
+                             size_t local_size,
+                             event &e1,
+                             event &e2);
 
         template<typename T>
         void write_buffer(buffer<T> &b, T *data) {
@@ -305,7 +318,8 @@ namespace cl {
         operator cl_context() const { return ctx; }
 
         template<typename T>
-        buffer<T> createBuffer(size_t count, cl_mem_flags flags) {
+        buffer<T> createBuffer(size_t count,
+                               cl_mem_flags flags = CL_MEM_READ_WRITE) {
             cl_mem mem = clCreateBuffer(ctx,
                                         flags,
                                         sizeof(T) * count, 
@@ -315,7 +329,8 @@ namespace cl {
         }
 
         template<typename T>
-        buffer<T> createBuffer(size_t count, T* ptr, cl_mem_flags flags) {
+        buffer<T> createBuffer(size_t count, T* ptr,
+                               cl_mem_flags flags = CL_MEM_READ_WRITE) {
             cl_mem mem = clCreateBuffer(ctx,
                                         flags | CL_MEM_USE_HOST_PTR,
                                         sizeof(T) * count, 

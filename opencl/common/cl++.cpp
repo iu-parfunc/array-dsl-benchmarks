@@ -280,7 +280,8 @@ event command_queue::execute2d(kernel &k, size_t dim1,
 }
 
 event command_queue::executeND(kernel &k, size_t dimensions,
-                               size_t global_size[], size_t local_size[])
+                               size_t global_size[], size_t local_size[],
+                               int num_events, cl_event *events)
 {
     cout << "Enqueuing " << dimensions << "-D kernel: (" << global_size[0];
     for(int i = 1; i < dimensions; ++i)
@@ -289,8 +290,40 @@ event command_queue::executeND(kernel &k, size_t dimensions,
 
 	cl_event e;
 	CL_CHECK(clEnqueueNDRangeKernel(queue, k.k, dimensions, NULL,
-                                    global_size, local_size, 0, 0, &e));
+                                    global_size, local_size,
+                                    num_events, events, &e));
     return event(e);
+}
+
+event command_queue::executeAfter(kernel &k, size_t global_size,
+                                  size_t local_size, event &e)
+{
+    return executeND(k, 1, &global_size, &local_size, 1, &e.e);
+}
+
+event command_queue::execute2dAfter(kernel &k,
+                                    size_t dim1, size_t dim2,
+                                    size_t local_size,
+                                    event &e)
+{
+    size_t global_size[] = {dim1, dim2};
+    size_t local_size_array[] = {local_size, local_size};
+
+    return executeND(k, 2, global_size, local_size_array, 1, &e.e);
+}
+
+event command_queue::execute2dAfter(kernel &k,
+                                    size_t dim1, size_t dim2,
+                                    size_t local_size,
+                                    event &e1,
+                                    event &e2)
+{
+    size_t global_size[] = {dim1, dim2};
+    size_t local_size_array[] = {local_size, local_size};
+
+    cl_event ea[] = {e1.e, e2.e};
+
+    return executeND(k, 2, global_size, local_size_array, 2, ea);
 }
 
 program context::createProgramFromSourceFile(string filename)

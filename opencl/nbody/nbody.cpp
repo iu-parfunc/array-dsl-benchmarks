@@ -9,15 +9,17 @@
 using namespace std;
 using namespace cl;
 
-const int N = 33554432;
+const int N = 2949;
 
 void print_device_info(device d);
 
 // Generate a random vector
-void fill_vector(float *v, int N) {
+void fill_vector(cl_double3 *v, int N) {
     for(int i = 0; i < N; ++i) {
         //v[i] = drand48();
-        v[i] = 1;
+        v[i].s[0] = drand48();
+        v[i].s[1] = drand48();
+        v[i].s[2] = drand48();
     }
 }
 
@@ -40,40 +42,65 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
     stringstream options;
     options << "-DLOCAL_SIZE=" << LOCAL_SIZE;
     options << " -DCUTOFF=" << CUTOFF;
+    options << " -DN=" << N;
     prog.build(dev, options.str());
 
-    const int NUM_BLOCKS = 64;
+    const int NUM_BLOCKS = (N + LOCAL_SIZE - 1) / LOCAL_SIZE;
 
-	auto x = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
-	auto y = ctx.createBuffer<float>(N, CL_MEM_READ_ONLY);
-	auto z = ctx.createBuffer<float>(NUM_BLOCKS * CUTOFF, CL_MEM_WRITE_ONLY);
+	auto points = ctx.createBuffer<cl_double3>(N);
+    auto point_cols = ctx.createBuffer<cl_double3>(N * N);
+    auto point_rows = ctx.createBuffer<cl_double3>(N * N);
+    auto force_mat = ctx.createBuffer<cl_double3>(N * N);
+    auto forces = ctx.createBuffer<cl_double3>(N);
 
 	{
-	  auto xp = q.mapBuffer(x);
-	  auto yp = q.mapBuffer(y);
+	  auto xp = q.mapBuffer(points);
 	  fill_vector(xp, N);
-	  fill_vector(yp, N);
 	}
 
-	auto k = prog.createKernel("dotprod");
-	k.setArg(0, x);
-	k.setArg(1, y);
-	k.setArg(2, z);
-	k.setArg(3, N);
+#define LOAD_KERNEL(x) auto x = prog.createKernel(#x)
+    LOAD_KERNEL(replicate_rows);
+    LOAD_KERNEL(replicate_cols);
+    LOAD_KERNEL(zip_force);
+    LOAD_KERNEL(fold_force);
+#undef LOAD_KERNEL
 
-	// LOCAL_SIZE needs to match LOCAL_SIZE in the kernel file.
-	auto e = q.execute(k, LOCAL_SIZE * NUM_BLOCKS, LOCAL_SIZE);
-    e.wait();
+    replicate_rows.setArg(0, points);
+    replicate_rows.setArg(1, point_rows);
 
-	auto zp = q.mapBuffer(z);
-    float total = 0;
-    for(int i = 0; i < NUM_BLOCKS * CUTOFF; ++i) {
-        total += zp[i];
-    }
-	cout << endl << "Result: " << total << endl;
+    replicate_cols.setArg(0, points);
+    replicate_cols.setArg(1, point_cols);
+    
+    zip_force.setArg(0, point_rows);
+    zip_force.setArg(1, point_cols);
+    zip_force.setArg(2, force_mat);
 
-    auto start = e.get_start();
-    auto stop  = e.get_stop();
+    fold_force.setArg(0, force_mat);
+    fold_force.setArg(1, forces);
+
+    auto global_size = LOCAL_SIZE * NUM_BLOCKS;
+
+    auto rep_row_e = q.execute2d(replicate_rows,
+                                 global_size, global_size,
+                                 LOCAL_SIZE);
+
+    auto rep_col_e = q.execute2d(replicate_cols,
+                                 global_size, global_size,
+                                 LOCAL_SIZE);
+
+    auto zip_e = q.execute2dAfter(zip_force,
+                                  global_size, global_size,
+                                  LOCAL_SIZE,
+                                  rep_row_e, rep_col_e);
+
+    auto force_e = q.executeAfter(fold_force,
+                                  global_size, LOCAL_SIZE,
+                                  zip_e);
+
+    force_e.wait();
+
+    auto start = min(rep_row_e.get_start(), rep_col_e.get_start());
+    auto stop  = force_e.get_stop();
 
     cout << "SELFTIMED " << double(stop - start) / 1e9 << endl;
 
