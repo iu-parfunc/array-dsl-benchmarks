@@ -8,8 +8,8 @@ __kernel void replicate_rows(__global double3 *points,
     int i = get_global_id(1);
     int j = get_global_id(0);
 
-    if(i < N && j < N)
-        output[i * N + j] = points[i];
+    if(i < NUM_BODIES && j < NUM_BODIES)
+        output[i * NUM_BODIES + j] = points[i];
 }
 
 __kernel void replicate_cols(__global double3 *points,
@@ -18,8 +18,14 @@ __kernel void replicate_cols(__global double3 *points,
     int i = get_global_id(1);
     int j = get_global_id(0);
 
-    if(i < N && j < N)
-        output[i * N + j] = points[j];
+    if(i < NUM_BODIES && j < NUM_BODIES)
+        output[i * NUM_BODIES + j] = points[j];
+}
+
+double mag(double3 x) {
+  // A Hack because Apple's OpenCL sucks.
+  return sqrt((float)(x.x * x.x + x.y * x.y + x.z * x.z));
+  //return length(x);
 }
 
 __kernel void zip_force(__global double3 *left,
@@ -29,13 +35,13 @@ __kernel void zip_force(__global double3 *left,
     int i = get_global_id(1);
     int j = get_global_id(0);
 
-    if(i < N && j < N) {
-        double3 a = left[i * N + j];
-        double3 b = right[i * N + j];
+    if(i < NUM_BODIES && j < NUM_BODIES) {
+        double3 a = left[i * NUM_BODIES + j];
+        double3 b = right[i * NUM_BODIES + j];
         
-        double d = length(a - b);
+        double d = mag(a - b);
         if(d > 0)
-            force[i * N + j] = (a - b) / (d * d);
+            force[i * NUM_BODIES + j] = (a - b) / (d * d);
     }
 }
 
@@ -44,11 +50,11 @@ __kernel void fold_force(__global double3 *force,
 {
     int i = get_global_id(0);
 
-    if(i >= N) return;
+    if(i >= NUM_BODIES) return;
 
     double3 total = (double3)(0, 0, 0);
-    for(int j = 0; j < N; j++) {
-        total += force[i * N + j];
+    for(int j = 0; j < NUM_BODIES; j++) {
+        total += force[i * NUM_BODIES + j];
     }
 
     out[i] = total;

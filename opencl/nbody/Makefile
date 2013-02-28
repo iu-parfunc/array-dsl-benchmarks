@@ -2,8 +2,11 @@ CXX=clang++
 
 CXXFLAGS = --std=c++0x -O -I../common
 
-#LDFLAGS  = -framework OpenCL
-LDFLAGS = -lOpenCL
+ifeq ($(shell uname), Darwin)
+	LDFLAGS  = -framework OpenCL
+else
+	LDFLAGS = -lOpenCL
+endif
 
 OBJS = nbody.o ../common/cl++.o
 

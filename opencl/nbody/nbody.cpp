@@ -9,7 +9,8 @@
 using namespace std;
 using namespace cl;
 
-const int N = 2949;
+//const int N = 2949;
+const int N = 1500;
 
 void print_device_info(device d);
 
@@ -42,7 +43,7 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
     stringstream options;
     options << "-DLOCAL_SIZE=" << LOCAL_SIZE;
     options << " -DCUTOFF=" << CUTOFF;
-    options << " -DN=" << N;
+    options << " -DNUM_BODIES=" << N;
     prog.build(dev, options.str());
 
     const int NUM_BLOCKS = (N + LOCAL_SIZE - 1) / LOCAL_SIZE;
