@@ -23,9 +23,11 @@ __kernel void replicate_cols(__global double3 *points,
 }
 
 double mag(double3 x) {
-  // A Hack because Apple's OpenCL sucks.
+#ifdef APPLE
   return sqrt((float)(x.x * x.x + x.y * x.y + x.z * x.z));
-  //return length(x);
+#else
+  return length(x);
+#endif
 }
 
 __kernel void zip_force(__global double3 *left,

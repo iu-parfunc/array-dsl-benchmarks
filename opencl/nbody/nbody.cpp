@@ -44,6 +44,9 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
     options << "-DLOCAL_SIZE=" << LOCAL_SIZE;
     options << " -DCUTOFF=" << CUTOFF;
     options << " -DNUM_BODIES=" << N;
+#ifdef __APPLE__
+	options << " -DAPPLE";
+#endif
     prog.build(dev, options.str());
 
     const int NUM_BLOCKS = (N + LOCAL_SIZE - 1) / LOCAL_SIZE;
