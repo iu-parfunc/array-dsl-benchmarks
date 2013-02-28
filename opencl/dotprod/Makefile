@@ -1,11 +1,11 @@
 CXX=clang++
 
-CXXFLAGS = --std=c++0x -O
+CXXFLAGS = --std=c++0x -O -I../common
 
 #LDFLAGS  = -framework OpenCL
 LDFLAGS = -lOpenCL
 
-OBJS = dotprod.o cl++.o
+OBJS = dotprod.o ../common/cl++.o
 
 .phony: all
 all: dotprod-cpu dotprod-gpu
@@ -17,7 +17,7 @@ dotprod-gpu: $(OBJS) dotprod-gpu.cpp
 	clang++ -o dotprod-gpu dotprod-gpu.cpp $(OBJS) $(LDFLAGS)
 
 %.d: %.cpp
-	$(CXX) -M $(CPPFLAGS) $< > $@.$$$$;                 \
+	$(CXX) -M $(CPPFLAGS) $(CXXFLAGS) $< > $@.$$$$;                 \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
