@@ -39,8 +39,6 @@ import System.Mem  (performGC)
 import Data.Maybe (fromJust)
 import Debug.Trace 
 
-
-import Common.Type -- TEMP
 import Common.Util (plusV)
 
 --------------------------------------------------------------------------------
@@ -151,17 +149,17 @@ main = do
   putStrLn$ "Done reading, converting to Acc array.."
 #endif
 
-  let input :: A.Acc (A.Vector (((Double,Double,Double),Double), (Double,Double,Double), (Double,Double,Double)))
+  let input :: A.Acc (A.Vector Position)
 #ifdef DEBUG      
       input = A.generate (A.index1$ A.constant$ fromJust n) $ \ix ->
                 let i,one :: A.Exp Double
                     i = A.fromIntegral $ A.unindex1 ix
                     one = 1 in
-                A.lift (((i,i,i),one), (one,one,one), (one,one,one))    
+                A.lift (i,i,i)    
   putStrLn$ "  Input prefix(4) "++ show(P.take 3$ A.toList $ I.run input)
 #else    
       input  = A.use input0
-      input0 = A.fromIArray $ U.amap (\ pos -> ((pos,1),(1,1,1),(1,1,1))) raw
+      input0 = A.fromIArray $ raw 
   putStrLn$ "  Input prefix(4) "++ show(P.take 3$ U.elems raw)
   evaluate input0
 #endif
@@ -170,7 +168,7 @@ main = do
   putStrLn$ "Input in CPU memory, starting benchmark..."
   t1 <- getCurrentTime
 --  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 1e-10) input
-  output <- evaluate $ Bkend.run $ calcAccels (A.constant 1e-10) input
+  output <- evaluate $ Bkend.run $ calcAccels input
   t2 <- getCurrentTime
   let dt = diffUTCTime t2 t1
   putStrLn$ "  Result prefix(4): "++ show(P.take 3$ A.toList output)
@@ -186,15 +184,15 @@ main = do
 -- The actual benchmark code:
 ----------------------------------------------------------------------------------------------------
 
-calcAccels :: A.Exp R -> A.Acc (A.Vector Body) -> A.Acc (A.Vector Accel)
-calcAccels epsilon bodies
+calcAccels :: A.Acc (A.Vector Position) -> A.Acc (A.Vector Accel)
+calcAccels bodies
   = let n       = A.size bodies
 
         cols    = A.replicate (lift $ Z :. n :. All) bodies
         rows    = A.replicate (lift $ Z :. All :. n) bodies
 
     in
-    A.fold plusV (constant (0,0,0)) $ A.zipWith (accel epsilon) rows cols
+    A.fold plusV (constant (0,0,0)) $ A.zipWith (accel) rows cols
 
 
 -- Acceleration ----------------------------------------------------------------
@@ -202,19 +200,24 @@ calcAccels epsilon bodies
 -- | Calculate the acceleration on a point due to some other point as an inverse
 --   separation-squared relation.
 --
-accel   :: Exp R                -- ^ Smoothing parameter
-        -> Exp Body             -- ^ The point being accelerated
-        -> Exp Body             -- ^ Neighbouring point
+accel   :: Exp Position           -- ^ The point being accelerated
+        -> Exp Position           -- ^ Neighbouring point
         -> Exp Accel
-accel epsilon body1 body2
-  = (rsqr >* epsilon) ? (lift (aabs * dx / r , aabs * dy / r, aabs * dz / r), lift ((0, 0, 0) :: Accel))
+accel body1 body2
+  =
+    (rsqr >* 1e-10) ?
+    -- (x1 ==* x2 &&* y1 ==* y2 &&* z1 ==* z2) ?
+    (lift (aabs * dx / r , aabs * dy / r, aabs * dz / r),
+     lift ((0, 0, 0) :: Accel))
   where
-    (x1, y1, z1) = unlift $ positionOfPointMass mp1
-    (x2, y2, z2) = unlift $ positionOfPointMass mp2
-    mp1         = pointMassOfBody body1
-    mp2         = pointMassOfBody body2
-    m1          = massOfPointMass mp1
-    m2          = massOfPointMass mp2
+    (x1, y1, z1) = unlift $ body1
+    (x2, y2, z2) = unlift $ body2
+    -- mp1         = pointMassOfBody body1
+    -- mp2         = pointMassOfBody body2
+    -- m1          = massOfPointMass mp1
+    -- m2          = massOfPointMass mp2
+    m1          = 1
+    m2          = 1
 
     dx          = x2 - x1
     dy          = y2 - y1
@@ -222,7 +225,6 @@ accel epsilon body1 body2
     rsqr        = (dx * dx) + (dy * dy) + (dz * dz)
     aabs        = (m1 * m2) / rsqr
     r           = sqrt rsqr
-
 
 -- | Take the position or mass of a PointMass
 --
@@ -249,4 +251,36 @@ velocityOfBody body = vel
     (_, vel, _) = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
 
 
+
+-- Types -----------------------------------------------------------------------
+-- We're using tuples instead of ADTs and defining Elt instances
+--
+
+-- | Not all compute devices support double precision
+--
+-- type R          = Float
+type R          = Double
+
+-- | Units of time
+--
+type Time       = R
+
+-- | The velocity of a point.
+--
+type Velocity   = (R, R, R)
+
+-- | The acceleration of a point.
+--
+type Accel      = (R, R, R)
+
+-- | A point in 2D space with its mass.
+--
+type Mass       = R
+type Position   = (R, R, R)
+type PointMass  = (Position, Mass)
+
+-- | Bodies consist of a Position and Mass, but also carry their velocity and
+--   acceleration between steps of the simulation.
+--
+type Body       = (PointMass, Velocity, Accel)
 
