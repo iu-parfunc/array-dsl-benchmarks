@@ -205,11 +205,11 @@ accel   :: Exp Position           -- ^ The point being accelerated
         -> Exp Accel
 accel body1 body2
   =
-    (rsqr >* 1e-10) ?
-    -- (x1 ==* x2 &&* y1 ==* y2 &&* z1 ==* z2) ?
-    (lift (aabs * dx / r , aabs * dy / r, aabs * dz / r),
-     lift ((0, 0, 0) :: Accel))
+--    (theaccel :: Accel)
+    (A.not (x1 ==* x2 &&* y1 ==* y2 &&* z1 ==* z2)) ?
+    (theaccel, lift ((0, 0, 0) :: Accel))
   where
+    theaccel = lift (aabs * dx / r , aabs * dy / r, aabs * dz / r)
     (x1, y1, z1) = unlift $ body1
     (x2, y2, z2) = unlift $ body2
     -- mp1         = pointMassOfBody body1
