@@ -37,7 +37,7 @@ accel   :: Exp R                -- ^ Smoothing parameter
         -> Exp Accel
 
 accel epsilon body1 body2
-  = (rsqr ==* 0) ? (lift ((0, 0, 0) :: Accel), lift (aabs * dx / r , aabs * dy / r, aabs * dz / r))
+  = (rsqr >* epsilon) ? (lift (aabs * dx / r , aabs * dy / r, aabs * dz / r), lift ((0, 0, 0) :: Accel))
   where
     (x1, y1, z1) = unlift $ positionOfPointMass mp1
     (x2, y2, z2) = unlift $ positionOfPointMass mp2
@@ -52,7 +52,6 @@ accel epsilon body1 body2
     rsqr        = (dx * dx) + (dy * dy) + (dz * dz)
     aabs        = (m1 + m2) / rsqr
     r           = sqrt rsqr
-
 
 -- Body ------------------------------------------------------------------------
 --

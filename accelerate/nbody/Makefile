@@ -12,16 +12,16 @@ all: getinput build
 build: interp c cilk cuda
 
 interp: $(HS) dir
-	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Interpreter" --make Main.hs -o bin/naive_'$@'.exe
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Interpreter" Main.hs -o bin/naive_'$@'.exe
 
 c: $(HS) dir
-	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.C" --make Main.hs -o bin/naive_'$@'.exe
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.C" Main.hs -o bin/naive_'$@'.exe
 
 cilk: $(HS) dir
-	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Cilk" --make Main.hs -o bin/naive_'$@'.exe
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Cilk" Main.hs -o bin/naive_'$@'.exe
 
 cuda: $(HS) dir
-	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.CUDA" --make Main.hs -o bin/naive_'$@'.exe
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.CUDA" Main.hs -o bin/naive_'$@'.exe
 
 dir:
 	mkdir -p bin/
