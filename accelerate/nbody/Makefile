@@ -7,6 +7,8 @@ endif
 
 GHC_OPTS= -threaded -O2
 
+N=100000
+
 all: getinput build
 
 build: interp c cilk cuda
@@ -29,7 +31,7 @@ dir:
 getinput: /tmp/uniform.3dpts
 
 /tmp/uniform.3dpts:
-	./inputGenerator/uniform -s -d 3 20000 $@
+	./inputGenerator/uniform -s -d 3 $(N) $@
 
 # See ../../README for the "calling conventions".
 run:

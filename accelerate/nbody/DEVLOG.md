@@ -31,14 +31,33 @@ Here's the surprising bit.  The sequential C backend seems to have
 regressed since yesterday, and now the fused version is only doing as
 well as the unfused versio yesterday.  
 
- * `2.4s` for N=10K, WITH fold/generate fusion
- * `3.40` for N=10K, *WITHOUT* fold/generate fusion
+ * `2.4s` for N=10K, WITH      fold/generate fusion [gcc]
+ * `1.53` for N=10K, WITH      fold/generate fusion [icc -fast]  
+ * `3.40` for N=10K, *WITHOUT* fold/generate fusion [gcc]
+ * `3.26` for N=10K, *WITHOUT* fold/generate fusion [icc -O3]
+ * `2.15` for N=10K, *WITHOUT* fold/generate fusion [icc -fast]
  
 (FYI, the interpreter take `6.15s` for N=500.)  The CUDA version
 crashed before but runs for me on a mine machine (shale) now:
 
- * `0.67` for N=10K, CUDA backend
+ * `0.67s` for N=10K, CUDA backend
  
 That's not so hot, in that, if the Cilk backend gets a decent speedup
-for threading AND vectorizatio, it could be better.
+for threading AND vectorizatio, it could be better.  (Btw, the first
+run was 3.16 seconds, an extra ~2.5s for compilation/NFS.)  Already,
+the Cilk version WITHUOT fusion can parallelize the Generate phase:
+
+ * `1.07s` for N=10K, Cilk backend, no fusion, sequential fold [icc]
+
+UH oh, at 20K it eats up the memory on the machine!  Even at 15K and
+with the sequential version it does... weird.  12K ok, 13K segfaults.
+
+Debugging mode:
+---------------
+
+Valgrind has nothing to complain about when we run as a standalone
+executable (i.e. with a Generate instead of Use). 
+
+And in fact, when I recompile and rerun I'm not seeing the crashes.
+It runs 20K (w/fusion) in `6.1s`, ah, but it still crashes at 25K.
 
