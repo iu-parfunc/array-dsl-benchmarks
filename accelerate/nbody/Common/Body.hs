@@ -8,7 +8,7 @@ module Common.Body (
   Velocity, Accel, PointMass, Body,
 
   -- * Calculations
-  accel,
+--  accel,
   -- advanceBody,
 
   -- ** Getters
@@ -26,32 +26,6 @@ import Common.Util
 import Data.Array.Accelerate            as A
 
 
--- Acceleration ----------------------------------------------------------------
---
--- | Calculate the acceleration on a point due to some other point as an inverse
---   separation-squared relation.
---
-accel   :: Exp R                -- ^ Smoothing parameter
-        -> Exp Body             -- ^ The point being accelerated
-        -> Exp Body             -- ^ Neighbouring point
-        -> Exp Accel
-
-accel epsilon body1 body2
-  = (rsqr >* epsilon) ? (lift (aabs * dx / r , aabs * dy / r, aabs * dz / r), lift ((0, 0, 0) :: Accel))
-  where
-    (x1, y1, z1) = unlift $ positionOfPointMass mp1
-    (x2, y2, z2) = unlift $ positionOfPointMass mp2
-    mp1         = pointMassOfBody body1
-    mp2         = pointMassOfBody body2
-    m1          = massOfPointMass mp1
-    m2          = massOfPointMass mp2
-
-    dx          = x2 - x1
-    dy          = y2 - y1
-    dz          = z2 - z1
-    rsqr        = (dx * dx) + (dy * dy) + (dz * dz)
-    aabs        = (m1 * m2) / rsqr
-    r           = sqrt rsqr
 
 -- Body ------------------------------------------------------------------------
 --
@@ -132,26 +106,3 @@ advanceBody time body = lift ( pm', vel', acc )
 
 -}
 
--- | Take the position or mass of a PointMass
---
-positionOfPointMass :: Exp PointMass -> Exp Position
-positionOfPointMass = A.fst
-
-massOfPointMass :: Exp PointMass -> Exp Mass
-massOfPointMass = A.snd
-
-
--- | Take the PointMass of a Body
---
-pointMassOfBody :: Exp Body -> Exp PointMass
-pointMassOfBody body = mp
-  where
-    (mp, _, _)  = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
-
-
--- | Take the Velocity of a Body
---
-velocityOfBody :: Exp Body -> Exp Velocity
-velocityOfBody body = vel
-  where
-    (_, vel, _) = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)

@@ -6,12 +6,12 @@
 
 -- friends
 -- import Config
-import Common.Body
+-- import Common.Body
 -- import Common.World
 -- import Random.Array
 -- import Random.Position                          
-import qualified Solver.Naive                   as Naive
-import qualified Solver.BarnsHut                as BarnsHut
+-- import qualified Solver.Naive                   as Naive
+-- import qualified Solver.BarnsHut                as BarnsHut
 
 import           Data.Array.Accelerate          as A
 import           Data.Array.Accelerate          ((:.),Z(Z))
@@ -170,7 +170,7 @@ main = do
   putStrLn$ "Input in CPU memory, starting benchmark..."
   t1 <- getCurrentTime
 --  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 1e-10) input
-  output <- evaluate $ Bkend.run $ calcAccels2 (A.constant 1e-10) input
+  output <- evaluate $ Bkend.run $ calcAccels (A.constant 1e-10) input
   t2 <- getCurrentTime
   let dt = diffUTCTime t2 t1
   putStrLn$ "  Result prefix(4): "++ show(P.take 3$ A.toList output)
@@ -182,8 +182,12 @@ main = do
 
 
 
-calcAccels2 :: A.Exp R -> A.Acc (A.Vector Body) -> A.Acc (A.Vector Accel)
-calcAccels2 epsilon bodies
+----------------------------------------------------------------------------------------------------
+-- The actual benchmark code:
+----------------------------------------------------------------------------------------------------
+
+calcAccels :: A.Exp R -> A.Acc (A.Vector Body) -> A.Acc (A.Vector Accel)
+calcAccels epsilon bodies
   = let n       = A.size bodies
 
         cols    = A.replicate (lift $ Z :. n :. All) bodies
@@ -191,4 +195,58 @@ calcAccels2 epsilon bodies
 
     in
     A.fold plusV (constant (0,0,0)) $ A.zipWith (accel epsilon) rows cols
+
+
+-- Acceleration ----------------------------------------------------------------
+--
+-- | Calculate the acceleration on a point due to some other point as an inverse
+--   separation-squared relation.
+--
+accel   :: Exp R                -- ^ Smoothing parameter
+        -> Exp Body             -- ^ The point being accelerated
+        -> Exp Body             -- ^ Neighbouring point
+        -> Exp Accel
+accel epsilon body1 body2
+  = (rsqr >* epsilon) ? (lift (aabs * dx / r , aabs * dy / r, aabs * dz / r), lift ((0, 0, 0) :: Accel))
+  where
+    (x1, y1, z1) = unlift $ positionOfPointMass mp1
+    (x2, y2, z2) = unlift $ positionOfPointMass mp2
+    mp1         = pointMassOfBody body1
+    mp2         = pointMassOfBody body2
+    m1          = massOfPointMass mp1
+    m2          = massOfPointMass mp2
+
+    dx          = x2 - x1
+    dy          = y2 - y1
+    dz          = z2 - z1
+    rsqr        = (dx * dx) + (dy * dy) + (dz * dz)
+    aabs        = (m1 * m2) / rsqr
+    r           = sqrt rsqr
+
+
+-- | Take the position or mass of a PointMass
+--
+positionOfPointMass :: Exp PointMass -> Exp Position
+positionOfPointMass = A.fst
+
+massOfPointMass :: Exp PointMass -> Exp Mass
+massOfPointMass = A.snd
+
+
+-- | Take the PointMass of a Body
+--
+pointMassOfBody :: Exp Body -> Exp PointMass
+pointMassOfBody body = mp
+  where
+    (mp, _, _)  = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
+
+
+-- | Take the Velocity of a Body
+--
+velocityOfBody :: Exp Body -> Exp Velocity
+velocityOfBody body = vel
+  where
+    (_, vel, _) = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
+
+
 
