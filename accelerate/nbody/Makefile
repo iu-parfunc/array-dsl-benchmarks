@@ -2,7 +2,7 @@
 HS=$(shell find -name "[A-Z]*.hs")
 
 ifeq ($(GHC),)
-  GHC=ghc
+  GHC=ghc-7.6.1
 endif
 
 GHC_OPTS= -threaded -O2

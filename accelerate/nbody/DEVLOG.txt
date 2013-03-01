@@ -1,0 +1,18 @@
+
+
+[2013.02.28] {Measuring some initial results}
+
+First, the PBBS version isn't really comparable, being Barnes-Hut.
+For reference:
+
+  * 1.2/3.36 seconds (4 vs 1 core) per round on MINE machines for 1M points
+
+Our sequential C backend (Data.Array.Accelerate.C) is starting off at:
+
+  * 3.8s for N=10K
+
+Whereas monad-par takes 0.5s on 4 core for 10K, and 3.6 for 25K.
+Hmm... something seems amiss.
+
+
+
