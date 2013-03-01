@@ -39,8 +39,10 @@ import Debug.Trace
 
 --------------------------------------------------------------------------------
 
+{-
 defaultBodies :: Int
 defaultBodies = 1000
+-}
 
 inputFile = "/tmp/uniform.3dpts"
 outputFile = "/tmp/nbody_out.3dpts"
@@ -99,11 +101,11 @@ outputFile = "/tmp/nbody_out.3dpts"
 
 
 -- | Read a PBBS geometry file (3D points):
-readGeomFile :: Int -> FilePath -> IO (U.Array Int (Double,Double,Double))
+readGeomFile :: Maybe Int -> FilePath -> IO (U.Array Int (Double,Double,Double))
 readGeomFile len path = do
   str <- B.readFile path
   let (hd:lines) = B.lines str
-      parsed = map parse (take len lines)
+      parsed = map parse (case len of Just n -> take n lines; Nothing -> lines)
 --      len    = length lines
       trim   = B.dropWhile isSpace
       parse ln =
@@ -113,7 +115,7 @@ readGeomFile len path = do
             Just (z,_ ) = readDouble (trim r2)
         in (x,y,z)
   case hd of
-    "pbbs_sequencePoint3d" -> return (U.listArray (0,len-1) parsed)
+    "pbbs_sequencePoint3d" -> return (U.listArray (0,length lines - 1) parsed)
     oth -> error$"Expected header line (pbbs_sequencePoint3d) got: "++show oth
 
 writeGeomFile :: FilePath -> A.Vector (Double,Double,Double) -> IO ()
@@ -133,9 +135,8 @@ main :: IO ()
 main = do
   args <- getArgs
   n <- case args of
-         [] -> do putStrLn$ "Using default number of bodies: "++show defaultBodies
-                  return defaultBodies
-         [n] -> return (read n)
+         [] -> return Nothing
+         [n] -> return (Just $ read n)
          
   putStrLn$ "NBODY: Reading input file..."
   raw <- readGeomFile n inputFile
@@ -157,12 +158,12 @@ main = do
   
   putStrLn$ "Input in CPU memory, starting benchmark..."
   t1 <- getCurrentTime
-  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 50) input
+  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 1e-10) input
   t2 <- getCurrentTime
   let dt = diffUTCTime t2 t1
   putStrLn$ "  Result prefix(3): "++ show(take 3$ A.toList output)
   putStrLn$ "  Result shape "++ show(A.arrayShape output)
-  putStrLn$ "time-with-compile: "++ show dt
+  putStrLn$ "SELFTIMED-with-compile: "++ show dt
 
   putStrLn$ "Writing output file to: "++ outputFile
   writeGeomFile outputFile output

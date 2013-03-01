@@ -7,21 +7,23 @@ endif
 
 GHC_OPTS= -threaded -O2
 
+N=100000
+
 all: getinput build
 
 build: interp c cilk cuda
 
 interp: $(HS) dir
-	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Interpreter" --make Main.hs -o bin/naive_'$@'.exe
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Interpreter" Main.hs -o bin/naive_'$@'.exe
 
 c: $(HS) dir
-	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.C" --make Main.hs -o bin/naive_'$@'.exe
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.C" Main.hs -o bin/naive_'$@'.exe
 
 cilk: $(HS) dir
-	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Cilk" --make Main.hs -o bin/naive_'$@'.exe
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Cilk" Main.hs -o bin/naive_'$@'.exe
 
 cuda: $(HS) dir
-	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.CUDA" --make Main.hs -o bin/naive_'$@'.exe
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.CUDA" Main.hs -o bin/naive_'$@'.exe
 
 dir:
 	mkdir -p bin/
@@ -29,7 +31,7 @@ dir:
 getinput: /tmp/uniform.3dpts
 
 /tmp/uniform.3dpts:
-	./inputGenerator/uniform -s -d 3 20000 $@
+	./inputGenerator/uniform -s -d 3 $(N) $@
 
 # See ../../README for the "calling conventions".
 run:
