@@ -46,11 +46,11 @@ accel epsilon body1 body2
     m1          = massOfPointMass mp1
     m2          = massOfPointMass mp2
 
-    dx          = x1 - x2
-    dy          = y1 - y2
-    dz          = z1 - z2
+    dx          = x2 - x1
+    dy          = y2 - y1
+    dz          = z2 - z1
     rsqr        = (dx * dx) + (dy * dy) + (dz * dz)
-    aabs        = (m1 + m2) / rsqr
+    aabs        = (m1 * m2) / rsqr
     r           = sqrt rsqr
 
 -- Body ------------------------------------------------------------------------
