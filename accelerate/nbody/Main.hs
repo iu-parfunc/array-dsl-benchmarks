@@ -14,6 +14,7 @@ import qualified Solver.Naive                   as Naive
 import qualified Solver.BarnsHut                as BarnsHut
 
 import qualified Data.Array.Accelerate          as A
+import           Data.Array.Accelerate          ((:.),Z(Z))
 #ifdef ACCBACKEND
 import qualified ACCBACKEND as Bkend
 #else
@@ -22,6 +23,7 @@ import qualified Data.Array.Accelerate.CUDA as Bkend
 
 -- system
 import Control.Exception (evaluate)
+import Control.Monad     (forM_)
 import Prelude                                  as P
 import           Data.Char (isSpace)
 import qualified Data.Array.Unboxed             as U
@@ -31,9 +33,19 @@ import           Data.ByteString.Lex.Double (readDouble)
 import qualified Data.ByteString.Char8 as B
 -- import qualified Data.ByteString.Lazy.Char8 as B
 import System.Environment
+import System.IO
 import System.Mem  (performGC)
 import Debug.Trace 
 
+--------------------------------------------------------------------------------
+
+defaultBodies :: Int
+defaultBodies = 1000
+
+inputFile = "/tmp/uniform.3dpts"
+outputFile = "/tmp/nbody_out.3dpts"
+
+--------------------------------------------------------------------------------
 
 -- import Data.Label
 -- import System.Random.MWC                        ( uniformR )
@@ -104,8 +116,18 @@ readGeomFile len path = do
     "pbbs_sequencePoint3d" -> return (U.listArray (0,len-1) parsed)
     oth -> error$"Expected header line (pbbs_sequencePoint3d) got: "++show oth
 
-defaultBodies :: Int
-defaultBodies = 1000
+writeGeomFile :: FilePath -> A.Vector (Double,Double,Double) -> IO ()
+writeGeomFile path arr = do
+  hnd <- openFile path WriteMode
+  B.hPutStrLn hnd "pbbs_sequencePoint3d"
+  forM_ [0..(A.arraySize$ A.arrayShape arr)-1] $ \ ix -> do    
+    -- could use bytestring-show or double-conversion packages here:
+    let (x,y,z) = A.indexArray arr (Z A.:. ix)
+    hPutStr   hnd (show x);  B.hPutStr hnd " "
+    hPutStr   hnd (show y);  B.hPutStr hnd " "
+    hPutStrLn hnd (show z);  
+  hClose hnd
+  return ()
 
 main :: IO ()
 main = do
@@ -116,7 +138,7 @@ main = do
          [n] -> return (read n)
          
   putStrLn$ "NBODY: Reading input file..."
-  raw <- readGeomFile n "/tmp/uniform.3dpts"
+  raw <- readGeomFile n inputFile
   putStrLn$ "  Input prefix(3) "++ show(take 3$ U.elems raw)
   putStrLn$ "Done reading, converting to Acc array.."
   let input :: A.Acc (A.Vector (((Double,Double,Double),Double), (Double,Double,Double), (Double,Double,Double)))
@@ -142,4 +164,5 @@ main = do
   putStrLn$ "  Result shape "++ show(A.arrayShape output)
   putStrLn$ "SELFTIMED: "++ show dt
 
--- TODO: write out the file.
+  putStrLn$ "Writing output file to: "++ outputFile
+  writeGeomFile outputFile output
