@@ -13,13 +13,14 @@ import Common.Body
 import qualified Solver.Naive                   as Naive
 import qualified Solver.BarnsHut                as BarnsHut
 
-import qualified Data.Array.Accelerate          as A
+import           Data.Array.Accelerate          as A
 import           Data.Array.Accelerate          ((:.),Z(Z))
 #ifdef ACCBACKEND
 import qualified ACCBACKEND as Bkend
 #else
 import qualified Data.Array.Accelerate.CUDA as Bkend
 #endif
+import qualified Data.Array.Accelerate.Interpreter as I
 
 -- system
 import Control.Exception (evaluate)
@@ -35,7 +36,12 @@ import qualified Data.ByteString.Char8 as B
 import System.Environment
 import System.IO
 import System.Mem  (performGC)
+import Data.Maybe (fromJust)
 import Debug.Trace 
+
+
+import Common.Type -- TEMP
+import Common.Util (plusV)
 
 --------------------------------------------------------------------------------
 
@@ -105,7 +111,7 @@ readGeomFile :: Maybe Int -> FilePath -> IO (U.Array Int (Double,Double,Double))
 readGeomFile len path = do
   str <- B.readFile path
   let (hd:lines) = B.lines str
-      parsed = map parse (case len of Just n -> take n lines; Nothing -> lines)
+      parsed = P.map parse (case len of Just n -> P.take n lines; Nothing -> lines)
 --      len    = length lines
       trim   = B.dropWhile isSpace
       parse ln =
@@ -135,35 +141,54 @@ main :: IO ()
 main = do
   args <- getArgs
   n <- case args of
-         [] -> return Nothing
-         [n] -> return (Just $ read n)
-         
+         []  -> return Nothing
+         [n] -> do putStrLn$ "NBODY size: N="++ n
+                   return (Just $ read n)
+#ifdef DEBUG
+#else
   putStrLn$ "NBODY: Reading input file..."
   raw <- readGeomFile n inputFile
-  putStrLn$ "  Input prefix(3) "++ show(take 3$ U.elems raw)
   putStrLn$ "Done reading, converting to Acc array.."
+#endif
+
   let input :: A.Acc (A.Vector (((Double,Double,Double),Double), (Double,Double,Double), (Double,Double,Double)))
-#ifdef DEBUG
-      input = A.generate (A.index1$ A.constant n) $ \ix ->
+#ifdef DEBUG      
+      input = A.generate (A.index1$ A.constant$ fromJust n) $ \ix ->
                 let i,one :: A.Exp Double
                     i = A.fromIntegral $ A.unindex1 ix
                     one = 1 in
                 A.lift (((i,i,i),one), (one,one,one), (one,one,one))    
+  putStrLn$ "  Input prefix(4) "++ show(P.take 3$ A.toList $ I.run input)
 #else    
       input  = A.use input0
       input0 = A.fromIArray $ U.amap (\ pos -> ((pos,1),(1,1,1),(1,1,1))) raw
+  putStrLn$ "  Input prefix(4) "++ show(P.take 3$ U.elems raw)
   evaluate input0
 #endif
   performGC
   
   putStrLn$ "Input in CPU memory, starting benchmark..."
   t1 <- getCurrentTime
-  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 1e-10) input
+--  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 1e-10) input
+  output <- evaluate $ Bkend.run $ calcAccels2 (A.constant 1e-10) input
   t2 <- getCurrentTime
   let dt = diffUTCTime t2 t1
-  putStrLn$ "  Result prefix(3): "++ show(take 3$ A.toList output)
+  putStrLn$ "  Result prefix(4): "++ show(P.take 3$ A.toList output)
   putStrLn$ "  Result shape "++ show(A.arrayShape output)
   putStrLn$ "SELFTIMED-with-compile: "++ show dt
 
   putStrLn$ "Writing output file to: "++ outputFile
   writeGeomFile outputFile output
+
+
+
+calcAccels2 :: A.Exp R -> A.Acc (A.Vector Body) -> A.Acc (A.Vector Accel)
+calcAccels2 epsilon bodies
+  = let n       = A.size bodies
+
+        cols    = A.replicate (lift $ Z :. n :. All) bodies
+        rows    = A.replicate (lift $ Z :. All :. n) bodies
+
+    in
+    A.fold plusV (constant (0,0,0)) $ A.zipWith (accel epsilon) rows cols
+
