@@ -115,18 +115,31 @@ main = do
                   return defaultBodies
          [n] -> return (read n)
          
-  putStrLn$ "Reading input file..."
+  putStrLn$ "NBODY: Reading input file..."
   raw <- readGeomFile n "/tmp/uniform.3dpts"
-  putStrLn$ "  Prefix "++ show(take 3$ U.elems raw)
-  putStrLn$ "Done reading (prefix "++ show(take 3$ U.elems raw)++") converting to Acc array.."  
-  let inputs = A.fromIArray $ U.amap (\ pos -> ((pos,1),(1,1,1),(1,1,1))) raw
-  evaluate inputs
+  putStrLn$ "  Input prefix(3) "++ show(take 3$ U.elems raw)
+  putStrLn$ "Done reading, converting to Acc array.."
+  let input :: A.Acc (A.Vector (((Double,Double,Double),Double), (Double,Double,Double), (Double,Double,Double)))
+#ifdef DEBUG
+      input = A.generate (A.index1$ A.constant n) $ \ix ->
+                let i,one :: A.Exp Double
+                    i = A.fromIntegral $ A.unindex1 ix
+                    one = 1 in
+                A.lift (((i,i,i),one), (one,one,one), (one,one,one))    
+#else    
+      input  = A.use input0
+      input0 = A.fromIArray $ U.amap (\ pos -> ((pos,1),(1,1,1),(1,1,1))) raw
+  evaluate input0
+#endif
   performGC
+  
   putStrLn$ "Input in CPU memory, starting benchmark..."
   t1 <- getCurrentTime
-  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 50) (A.use inputs)
+  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 50) input
   t2 <- getCurrentTime
   let dt = diffUTCTime t2 t1
-  putStrLn$ "  Prefix "++ show(take 3$ A.toList output)
+  putStrLn$ "  Result prefix(3): "++ show(take 3$ A.toList output)
+  putStrLn$ "  Result shape "++ show(A.arrayShape output)
   putStrLn$ "SELFTIMED: "++ show dt
 
+-- TODO: write out the file.

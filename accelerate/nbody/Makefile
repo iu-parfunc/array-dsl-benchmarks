@@ -1,16 +1,30 @@
 
-
-EXE=./bin/naive.exe
 HS=$(shell find -name "[A-Z]*.hs")
+
+ifeq ($(GHC),)
+  GHC=ghc
+endif
+
+GHC_OPTS= -threaded -O2
 
 all: getinput build
 
-build: $(EXE)
-$(EXE): $(HS)
+build: interp c cilk cuda
+
+interp: $(HS) dir
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Interpreter" --make Main.hs -o bin/naive_'$@'.exe
+
+c: $(HS) dir
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.C" --make Main.hs -o bin/naive_'$@'.exe
+
+cilk: $(HS) dir
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Cilk" --make Main.hs -o bin/naive_'$@'.exe
+
+cuda: $(HS) dir
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.CUDA" --make Main.hs -o bin/naive_'$@'.exe
+
+dir:
 	mkdir -p bin/
-	ghc -threaded -DACCBACKEND="Data.Array.Accelerate.Interpreter" --make -O2 Main.hs -o bin/naive_interp.exe
-	ghc -threaded -DACCBACKEND="Data.Array.Accelerate.Cilk" --make -O2 Main.hs -o bin/naive_cilk.exe
-	ghc -threaded -DACCBACKEND="Data.Array.Accelerate.CUDA" --make -O2 Main.hs -o bin/naive_cuda.exe
 
 getinput: /tmp/uniform.3dpts
 
@@ -24,3 +38,7 @@ run:
 
 deps:
 	cabal install bytestring-lexing
+
+
+clean:
+	rm -f bin/*
