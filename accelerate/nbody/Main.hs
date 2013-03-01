@@ -163,7 +163,7 @@ main = do
   let dt = diffUTCTime t2 t1
   putStrLn$ "  Result prefix(3): "++ show(take 3$ A.toList output)
   putStrLn$ "  Result shape "++ show(A.arrayShape output)
-  putStrLn$ "time-with-compile: "++ show dt
+  putStrLn$ "SELFTIMED-with-compile: "++ show dt
 
   putStrLn$ "Writing output file to: "++ outputFile
   writeGeomFile outputFile output
