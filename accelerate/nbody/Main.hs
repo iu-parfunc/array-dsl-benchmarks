@@ -212,10 +212,6 @@ accel body1 body2
     theaccel = lift (aabs * dx / r , aabs * dy / r, aabs * dz / r)
     (x1, y1, z1) = unlift $ body1
     (x2, y2, z2) = unlift $ body2
-    -- mp1         = pointMassOfBody body1
-    -- mp2         = pointMassOfBody body2
-    -- m1          = massOfPointMass mp1
-    -- m2          = massOfPointMass mp2
     m1          = 1
     m2          = 1
 
@@ -225,31 +221,6 @@ accel body1 body2
     rsqr        = (dx * dx) + (dy * dy) + (dz * dz)
     aabs        = (m1 * m2) / rsqr
     r           = sqrt rsqr
-
--- | Take the position or mass of a PointMass
---
-positionOfPointMass :: Exp PointMass -> Exp Position
-positionOfPointMass = A.fst
-
-massOfPointMass :: Exp PointMass -> Exp Mass
-massOfPointMass = A.snd
-
-
--- | Take the PointMass of a Body
---
-pointMassOfBody :: Exp Body -> Exp PointMass
-pointMassOfBody body = mp
-  where
-    (mp, _, _)  = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
-
-
--- | Take the Velocity of a Body
---
-velocityOfBody :: Exp Body -> Exp Velocity
-velocityOfBody body = vel
-  where
-    (_, vel, _) = unlift body   :: (Exp PointMass, Exp Velocity, Exp Accel)
-
 
 
 -- Types -----------------------------------------------------------------------
