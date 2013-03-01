@@ -1,6 +1,7 @@
 
 
 [2013.02.28] {Measuring some initial results}
+---------------------------------------------
 
 First, the PBBS version isn't really comparable, being Barnes-Hut.
 For reference:
@@ -17,5 +18,4 @@ Hmm... I guess this poor initial result shouldn't be suprising.  Right
 now the fold/generate deforestation isn't happening, so we're creating
 the big matrix before folding.  Further, it's doing 2X the work it
 needs to.
-
 
