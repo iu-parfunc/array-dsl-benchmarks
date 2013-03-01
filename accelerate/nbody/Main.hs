@@ -24,7 +24,7 @@ import qualified Data.Array.Accelerate.Interpreter as I
 
 -- system
 import Control.Exception (evaluate)
-import Control.Monad     (forM_)
+import Control.Monad     (forM_,when)
 import Prelude                                  as P
 import           Data.Char (isSpace)
 import qualified Data.Array.Unboxed             as U
@@ -109,17 +109,24 @@ readGeomFile :: Maybe Int -> FilePath -> IO (U.Array Int (Double,Double,Double))
 readGeomFile len path = do
   str <- B.readFile path
   let (hd:lines) = B.lines str
-      parsed = P.map parse (case len of Just n -> P.take n lines; Nothing -> lines)
---      len    = length lines
+
+  let numlines = length lines
+      len2 = case len of
+               Just n  -> n
+               Nothing -> numlines
+                 
+  putStrLn$ "Read "++show numlines++" lines from file..."
+  when (len2 > numlines)$ error$"Not enough data in file!  Desired: "++show len2++", found "++show numlines
+  
+  let parsed = P.map parse (P.take len2 lines)
       trim   = B.dropWhile isSpace
       parse ln =
         let Just (x,r1) = readDouble ln
---            Just (y,r2) = trace ("READING REST: "++show r1) $ readDouble r1
             Just (y,r2) = readDouble (trim r1)
             Just (z,_ ) = readDouble (trim r2)
         in (x,y,z)
   case hd of
-    "pbbs_sequencePoint3d" -> return (U.listArray (0,length lines - 1) parsed)
+    "pbbs_sequencePoint3d" -> return (U.listArray (0,len2 - 1) parsed)
     oth -> error$"Expected header line (pbbs_sequencePoint3d) got: "++show oth
 
 writeGeomFile :: FilePath -> A.Vector (Double,Double,Double) -> IO ()
