@@ -4,26 +4,20 @@
 -- An N-Body simulation
 --
 
--- friends
--- import Config
-import Common.Body
--- import Common.World
--- import Random.Array
--- import Random.Position                          
-import qualified Solver.Naive                   as Naive
-import qualified Solver.BarnsHut                as BarnsHut
+module Main where
 
-import qualified Data.Array.Accelerate          as A
+import           Data.Array.Accelerate          as A
 import           Data.Array.Accelerate          ((:.),Z(Z))
 #ifdef ACCBACKEND
 import qualified ACCBACKEND as Bkend
 #else
 import qualified Data.Array.Accelerate.CUDA as Bkend
 #endif
+import qualified Data.Array.Accelerate.Interpreter as I
 
 -- system
 import Control.Exception (evaluate)
-import Control.Monad     (forM_)
+import Control.Monad     (forM_,when)
 import Prelude                                  as P
 import           Data.Char (isSpace)
 import qualified Data.Array.Unboxed             as U
@@ -35,18 +29,160 @@ import qualified Data.ByteString.Char8 as B
 import System.Environment
 import System.IO
 import System.Mem  (performGC)
+import Data.Maybe (fromJust)
 import Debug.Trace 
 
+import Common.Util (plusV)
+--------------------------------------------------------------------------------
+-- Settings
 --------------------------------------------------------------------------------
 
-{-
-defaultBodies :: Int
-defaultBodies = 1000
--}
+type R          = Double
+type Velocity   = (R, R, R)
+type Position   = (R, R, R)
+type Accel      = (R, R, R)
 
 inputFile = "/tmp/uniform.3dpts"
 outputFile = "/tmp/nbody_out.3dpts"
 
+--------------------------------------------------------------------------------
+-- Reading/writing file data
+--------------------------------------------------------------------------------
+
+-- | Read a PBBS geometry file (3D points):
+readGeomFile :: Maybe Int -> FilePath -> IO (U.Array Int (Double,Double,Double))
+readGeomFile len path = do
+  str <- B.readFile path
+  let (hd:lines) = B.lines str
+
+  let numlines = length lines
+      len2 = case len of
+               Just n  -> n
+               Nothing -> numlines
+                 
+  putStrLn$ "Read "++show numlines++" lines from file..."
+  when (len2 > numlines)$ error$"Not enough data in file!  Desired: "++show len2++", found "++show numlines
+  
+  let parsed = P.map parse (P.take len2 lines)
+      trim   = B.dropWhile isSpace
+      parse ln =
+        let Just (x,r1) = readDouble ln
+            Just (y,r2) = readDouble (trim r1)
+            Just (z,_ ) = readDouble (trim r2)
+        in (x,y,z)
+  case hd of
+    "pbbs_sequencePoint3d" -> return (U.listArray (0,len2 - 1) parsed)
+    oth -> error$"Expected header line (pbbs_sequencePoint3d) got: "++show oth
+
+writeGeomFile :: FilePath -> A.Vector (Double,Double,Double) -> IO ()
+writeGeomFile path arr = do
+  hnd <- openFile path WriteMode
+  B.hPutStrLn hnd "pbbs_sequencePoint3d"
+  forM_ [0..(A.arraySize$ A.arrayShape arr)-1] $ \ ix -> do    
+    -- could use bytestring-show or double-conversion packages here:
+    let (x,y,z) = A.indexArray arr (Z A.:. ix)
+    hPutStr   hnd (show x);  B.hPutStr hnd " "
+    hPutStr   hnd (show y);  B.hPutStr hnd " "
+    hPutStrLn hnd (show z);  
+  hClose hnd
+  return ()
+
+--------------------------------------------------------------------------------
+-- MAIN script
+--------------------------------------------------------------------------------
+
+main :: IO ()
+main = do
+  args <- getArgs
+  n <- case args of
+         []  -> return Nothing
+         [n] -> do putStrLn$ "NBODY size: N="++ n
+                   return (Just $ read n)
+#ifdef DEBUG
+#else
+  putStrLn$ "NBODY: Reading input file..."
+  raw <- readGeomFile n inputFile
+  putStrLn$ "Done reading, converting to Acc array.."
+#endif
+
+  let input :: A.Acc (A.Vector Position)
+#ifdef DEBUG      
+      input = A.generate (A.index1$ A.constant$ fromJust n) $ \ix ->
+                let i,one :: A.Exp Double
+                    i = A.fromIntegral $ A.unindex1 ix
+                    one = 1 in
+                A.lift (i,i,i)    
+  putStrLn$ "  Input prefix(4) "++ show(P.take 3$ A.toList $ I.run input)
+#else    
+      input  = A.use input0
+      input0 = A.fromIArray $ raw 
+  putStrLn$ "  Input prefix(4) "++ show(P.take 3$ U.elems raw)
+  evaluate input0
+#endif
+  performGC
+  
+  putStrLn$ "Input in CPU memory, starting benchmark..."
+  t1 <- getCurrentTime
+--  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 1e-10) input
+  output <- evaluate $ Bkend.run $ calcAccels input
+  t2 <- getCurrentTime
+  let dt = diffUTCTime t2 t1
+  putStrLn$ "  Result prefix(4): "++ show(P.take 3$ A.toList output)
+  putStrLn$ "  Result shape "++ show(A.arrayShape output)
+  putStrLn$ "SELFTIMED-with-compile: "++ show dt
+
+  putStrLn$ "Writing output file to: "++ outputFile
+  writeGeomFile outputFile output
+
+
+
+----------------------------------------------------------------------------------------------------
+-- The actual benchmark code:
+----------------------------------------------------------------------------------------------------
+
+calcAccels :: A.Acc (A.Vector Position) -> A.Acc (A.Vector Accel)
+calcAccels bodies
+  = let n       = A.size bodies
+
+        cols    = A.replicate (lift $ Z :. n :. All) bodies
+        rows    = A.replicate (lift $ Z :. All :. n) bodies
+
+    in
+    A.fold plusV (constant (0,0,0)) $ A.zipWith (accel) rows cols
+
+
+-- Acceleration ----------------------------------------------------------------
+--
+-- | Calculate the acceleration on a point due to some other point as an inverse
+--   separation-squared relation.
+--
+accel   :: Exp Position           -- ^ The point being accelerated
+        -> Exp Position           -- ^ Neighbouring point
+        -> Exp Accel
+accel body1 body2
+  =
+--    (theaccel :: Accel)
+    (A.not (x1 ==* x2 &&* y1 ==* y2 &&* z1 ==* z2)) ?
+    (theaccel, lift ((0, 0, 0) :: Accel))
+  where
+    theaccel = lift (aabs * dx / r , aabs * dy / r, aabs * dz / r)
+    (x1, y1, z1) = unlift $ body1
+    (x2, y2, z2) = unlift $ body2
+    m1          = 1
+    m2          = 1
+
+    dx          = x2 - x1
+    dy          = y2 - y1
+    dz          = z2 - z1
+    rsqr        = (dx * dx) + (dy * dy) + (dz * dz)
+    aabs        = (m1 * m2) / rsqr
+    r           = sqrt rsqr
+
+
+
+
+--------------------------------------------------------------------------------
+-- OLD Main
 --------------------------------------------------------------------------------
 
 -- import Data.Label
@@ -98,72 +234,3 @@ outputFile = "/tmp/nbody_out.3dpts"
 --         --
 --         mean <- withConfig cconf $ measureEnvironment >>= flip runBenchmark (whnf (advance 0.1) world) >>= flip analyseMean 100
 --         putStrLn $ "SELFTIMED: " ++ show mean
-
-
--- | Read a PBBS geometry file (3D points):
-readGeomFile :: Maybe Int -> FilePath -> IO (U.Array Int (Double,Double,Double))
-readGeomFile len path = do
-  str <- B.readFile path
-  let (hd:lines) = B.lines str
-      parsed = map parse (case len of Just n -> take n lines; Nothing -> lines)
---      len    = length lines
-      trim   = B.dropWhile isSpace
-      parse ln =
-        let Just (x,r1) = readDouble ln
---            Just (y,r2) = trace ("READING REST: "++show r1) $ readDouble r1
-            Just (y,r2) = readDouble (trim r1)
-            Just (z,_ ) = readDouble (trim r2)
-        in (x,y,z)
-  case hd of
-    "pbbs_sequencePoint3d" -> return (U.listArray (0,length lines - 1) parsed)
-    oth -> error$"Expected header line (pbbs_sequencePoint3d) got: "++show oth
-
-writeGeomFile :: FilePath -> A.Vector (Double,Double,Double) -> IO ()
-writeGeomFile path arr = do
-  hnd <- openFile path WriteMode
-  B.hPutStrLn hnd "pbbs_sequencePoint3d"
-  forM_ [0..(A.arraySize$ A.arrayShape arr)-1] $ \ ix -> do    
-    -- could use bytestring-show or double-conversion packages here:
-    let (x,y,z) = A.indexArray arr (Z A.:. ix)
-    hPutStr   hnd (show x);  B.hPutStr hnd " "
-    hPutStr   hnd (show y);  B.hPutStr hnd " "
-    hPutStrLn hnd (show z);  
-  hClose hnd
-  return ()
-
-main :: IO ()
-main = do
-  args <- getArgs
-  n <- case args of
-         [] -> return Nothing
-         [n] -> return (Just $ read n)
-         
-  putStrLn$ "NBODY: Reading input file..."
-  raw <- readGeomFile n inputFile
-  putStrLn$ "  Input prefix(3) "++ show(take 3$ U.elems raw)
-  putStrLn$ "Done reading, converting to Acc array.."
-  let input :: A.Acc (A.Vector (((Double,Double,Double),Double), (Double,Double,Double), (Double,Double,Double)))
-#ifdef DEBUG
-      input = A.generate (A.index1$ A.constant n) $ \ix ->
-                let i,one :: A.Exp Double
-                    i = A.fromIntegral $ A.unindex1 ix
-                    one = 1 in
-                A.lift (((i,i,i),one), (one,one,one), (one,one,one))    
-#else    
-      input  = A.use input0
-      input0 = A.fromIArray $ U.amap (\ pos -> ((pos,1),(1,1,1),(1,1,1))) raw
-  evaluate input0
-#endif
-  performGC
-  
-  putStrLn$ "Input in CPU memory, starting benchmark..."
-  t1 <- getCurrentTime
-  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 1e-10) input
-  t2 <- getCurrentTime
-  let dt = diffUTCTime t2 t1
-  putStrLn$ "  Result prefix(3): "++ show(take 3$ A.toList output)
-  putStrLn$ "  Result shape "++ show(A.arrayShape output)
-  putStrLn$ "SELFTIMED-with-compile: "++ show dt
-
-  putStrLn$ "Writing output file to: "++ outputFile
-  writeGeomFile outputFile output

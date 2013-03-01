@@ -7,6 +7,9 @@ endif
 
 GHC_OPTS= -threaded -O2
 
+INFILE=/tmp/uniform.3dpts
+OUTFILE=/tmp/nbody_out.3dpts
+
 N=100000
 
 all: getinput build
@@ -28,10 +31,15 @@ cuda: $(HS) dir
 dir:
 	mkdir -p bin/
 
-getinput: /tmp/uniform.3dpts
+getinput: $(INFILE)
 
-/tmp/uniform.3dpts:
+$(INFILE):
 	./inputGenerator/uniform -s -d 3 $(N) $@
+
+check: $(INFILE)
+	head -n $(shell wc -l $(OUTFILE) | awk '{ print $$1 }') $(INFILE) > /tmp/short_uniform.3dpts
+	../../pbbs/nBody/common/nbodyCheck /tmp/short_uniform.3dpts $(OUTFILE)
+
 
 # See ../../README for the "calling conventions".
 run:

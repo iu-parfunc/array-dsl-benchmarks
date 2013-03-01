@@ -61,3 +61,31 @@ executable (i.e. with a Generate instead of Use).
 And in fact, when I recompile and rerun I'm not seeing the crashes.
 It runs 20K (w/fusion) in `6.1s`, ah, but it still crashes at 25K.
 
+
+
+[2013.03.01] {A new round of numbers before our meeting}
+--------------------------------------------------------
+
+Cilk backend, with fusion (same as sequential for now):
+Mine machines:
+
+ * `2.0` N=10K 
+ * `8.12s` N=20K   
+ * `12.7` N=25K   
+
+Cilk WITHOUT fusion, mine (siltstone):
+
+ * This stopped compiling... vectorizer no longer happy.
+
+Cilk WITHOUT fusion, hive:
+
+
+Commentary:
+
+  This is pretty inconsistent with before.  The latest round is on the
+  CUT DOWN version of the benchmark, which should be simpler.  Why
+  would there be a regression at the 10K time?  
+
+  I'm also seeing MASSIVE memory usage when I use the C (not Cilk)
+  version.  Hmm.  And the above poor numbers reproduce on another mine
+  machine (diorite).
