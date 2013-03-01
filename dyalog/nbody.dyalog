@@ -1,5 +1,18 @@
-﻿:Namespace NBODY
-    ⎕IO ⎕ML ⎕WX←0 0 3
+﻿⍝ Dyalog NBODY Benchmark
+⍝ ──────────────────────
+⍝ 
+⍝ This document describes the namespace NBODY, which implements 
+⍝ a series of approaches for doing an NBody calculation. To 
+⍝ use a given nbody calculator NBC, you can run the following:
+⍝
+⍝     NBODY.NBC NBODY.GEN∆DATA N
+⍝
+⍝ Here N is the number of the particles to use in the simulation.
+⍝ This is calculated using the PBBS uniform 3-D points generator.
+
+:Namespace NBODY
+    ⎕IO ⎕ML ⎕WX←0 0 3                    
+  
 
     ∇ D←GEN∆DATA N;T
       ⎕SH'../pbbs/nBody/geometryData/uniform -s -d 3 ',(⍕N),' pbbs_data'
@@ -18,6 +31,10 @@
   ⍝ those from the equation.
   
     F←{V÷3*⍨|V←⍵-⍺}
+    
+  ⍝ The reference implementation of NBody against which we compare 
+  ⍝ out other implementations is called REF. It does the naive
+  ⍝ outer product using F defined above. 
 
     REF←{⍉↑+/∘.F⍨⊂[0]⍵}
     
