@@ -40,7 +40,7 @@ well as the unfused versio yesterday.
 (FYI, the interpreter take `6.15s` for N=500.)  The CUDA version
 crashed before but runs for me on a mine machine (shale) now:
 
- * `0.67s` for N=10K, CUDA backend
+ * `0.67s` for N=10K, CUDA backend ("GeForce GT 430")
  
 That's not so hot, in that, if the Cilk backend gets a decent speedup
 for threading AND vectorizatio, it could be better.  (Btw, the first
@@ -89,3 +89,13 @@ Commentary:
   I'm also seeing MASSIVE memory usage when I use the C (not Cilk)
   version.  Hmm.  And the above poor numbers reproduce on another mine
   machine (diorite).
+
+
+
+[2013.03.01] {Edward's numbers}
+--------------------------------------------------------
+
+Geforce 590GTX:
+
+ * `0.8s` N=20K
+ 
