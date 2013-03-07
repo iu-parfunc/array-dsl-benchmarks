@@ -125,3 +125,12 @@ _Cilk_for, or whether I inlined that function leaving it to the
 pragmas.
 
 
+[2013.03.07] {Added parallelism to the outer-loop of a multidim for}
+--------------------------------------------------------------------
+
+This much SHOULD be safe.  But I'm getting memory explosions.  At
+N=10K it runs (1.6s) but even then I see it using 60% of the memory on
+the box.  Where on earth is that coming from?
+
+ACTUALLY... this memory leak seems to be happening even on my
+sequential C version.  How far does it go back?
