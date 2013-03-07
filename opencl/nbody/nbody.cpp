@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <stdlib.h>
+#include <cassert>
 
 #include "cl++.h"
 
@@ -10,7 +11,7 @@ using namespace std;
 using namespace cl;
 
 //const int N = 2949;
-const int N = 10000;
+//const int N = 10000;
 
 void print_device_info(device d);
 
@@ -22,6 +23,30 @@ void fill_vector(cl_double3 *v, int N) {
         v[i].s[1] = drand48();
         v[i].s[2] = drand48();
     }
+}
+
+template<typename T>
+vector<cl_double3> read_data(T &cin) {
+	string header;
+	cin >> header;
+	assert(header == "pbbs_sequencePoint3d");
+
+	vector<cl_double3> result;
+
+	double x, y, z;
+	cin >> x >> y >> z;
+	while(!cin.eof()) {
+		cl_double3 pt;
+		pt.s[0] = x;
+		pt.s[1] = y;
+		pt.s[2] = z;
+
+		result.push_back(pt);
+
+		cin >> x >> y >> z;
+	}
+
+	return result;
 }
 
 int nbody(cl_device_type type, int LOCAL_SIZE) {
@@ -40,6 +65,9 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
 
     const int CUTOFF = 1;
 
+	auto data = read_data(cin);
+	auto N = data.size();
+
     stringstream options;
     options << "-DLOCAL_SIZE=" << LOCAL_SIZE;
     options << " -DCUTOFF=" << CUTOFF;
@@ -51,15 +79,19 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
 
     const int NUM_BLOCKS = (N + LOCAL_SIZE - 1) / LOCAL_SIZE;
 
+	cout << "Read " << data.size() << " points" << endl;
+
 	auto points = ctx.createBuffer<cl_double3>(N);
-	{
-	  auto xp = q.mapBuffer(points);
-	  fill_vector(xp, N);
-	}
     auto forces = ctx.createBuffer<cl_double3>(N);
 
     auto global_size = LOCAL_SIZE * NUM_BLOCKS;
 
+	auto transfer_e = q.mapBuffer(points, [&](cl_double3 *xp) {
+			for(int i = 0; i < N; ++i) {
+				xp[i] = data[i];
+			}
+		});
+	
 #define LOAD_KERNEL(x) auto x = prog.createKernel(#x)
 #ifndef OPTIMIZED
     auto point_cols = ctx.createBuffer<cl_double3>(N * N);
@@ -84,13 +116,15 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
     fold_force.setArg(0, force_mat);
     fold_force.setArg(1, forces);
 
-    auto rep_row_e = q.execute2d(replicate_rows,
-                                 global_size, global_size,
-                                 LOCAL_SIZE);
+    auto rep_row_e = q.execute2dAfter(replicate_rows,
+									  global_size, global_size,
+									  LOCAL_SIZE,
+									  transfer_e);
 
-    auto rep_col_e = q.execute2d(replicate_cols,
-                                 global_size, global_size,
-                                 LOCAL_SIZE);
+    auto rep_col_e = q.execute2dAfter(replicate_cols,
+									  global_size, global_size,
+									  LOCAL_SIZE,
+									  transfer_e);
 
     auto zip_e = q.execute2dAfter(zip_force,
                                   global_size, global_size,
@@ -102,7 +136,7 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
                                   zip_e);
     force_e.wait();
 
-    auto start = min(rep_row_e.get_start(), rep_col_e.get_start());
+    auto compute_start = min(rep_row_e.get_start(), rep_col_e.get_start());
 
 #else
 	LOAD_KERNEL(nbody_opt);
@@ -113,13 +147,33 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
 	auto force_e = q.execute(nbody_opt, global_size, LOCAL_SIZE);
 	force_e.wait();
 
-	auto start = force_e.get_start();
+	auto compute_start = force_e.get_start();
 #endif
 #undef LOAD_KERNEL
 
-    auto stop  = force_e.get_stop();
+	// write out the results
+    cl_ulong stop;
+	q.mapBufferEvent(forces, [&](cl_double3 *forces, event &e) {
+			stop = e.get_stop();
 
-    cout << "SELFTIMED " << double(stop - start) / 1e9 << endl;
+			ofstream out("nbody.3dpts");
+			out << "pbbs_sequencePoint3d" << endl;
+
+			for(int i = 0; i < N; ++i) {
+				out << forces[i].s[0] << " ";
+				out << forces[i].s[1] << " ";
+				out << forces[i].s[2] << endl;
+			}
+		});
+
+	auto start = transfer_e.get_start();
+	auto compute_stop = force_e.get_stop();
+
+	cout << "SELFTIMED (compute)          "
+		 << double(compute_stop - compute_start) / 1e9 << endl;
+    cout << "SELFTIMED (compute+transfer) "
+		 << double(stop - start) / 1e9 << endl;
+
 
     return 0;
 }

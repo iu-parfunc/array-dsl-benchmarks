@@ -40,7 +40,7 @@ well as the unfused versio yesterday.
 (FYI, the interpreter take `6.15s` for N=500.)  The CUDA version
 crashed before but runs for me on a mine machine (shale) now:
 
- * `0.67s` for N=10K, CUDA backend
+ * `0.67s` for N=10K, CUDA backend ("GeForce GT 430")
  
 That's not so hot, in that, if the Cilk backend gets a decent speedup
 for threading AND vectorizatio, it could be better.  (Btw, the first
@@ -89,3 +89,70 @@ Commentary:
   I'm also seeing MASSIVE memory usage when I use the C (not Cilk)
   version.  Hmm.  And the above poor numbers reproduce on another mine
   machine (diorite).
+
+
+
+[2013.03.01] {Edward's numbers}
+--------------------------------------------------------
+
+Geforce 590GTX:
+
+ * `0.8s` N=20K
+ 
+[2013.03.07] {Adding hacks to C backend to avoid ICC vectorization pitfalls}
+----------------------------------------------------------------------------
+
+Bottom line: "__declspec(vector)" is NOT a safe way to vectorize for
+machine generated code.  It has arbitrary rules for what will
+vectorize and what will throw an error, and I'm not aware of a way to
+turn those errors into warnings (i.e. fall back to non-vectorized
+code).  For example, this line breaks vectorization:
+
+    if ((bool)(!((bool)((bool)(e11 == e12) && (bool)((bool)(e8 == e7) && (bool)(e10 == e9))))))
+
+But removing the casts allows vectorization to succeed.
+
+For now I'm adding a few hacks to get around this kind of thing, but
+ultimately I think it means that the Cilk backend will have to be
+restricted to using #pragma ivdep and #pragma vector always, and
+inlining everything into a loop rather than having a separate
+elemental function.
+
+This may not be so bad though, because in the simple test I performed
+(hacking up one of our generated files), ICC generated the EXACT SAME
+BINARY, irrespective of whether I called an elemental function from a
+_Cilk_for, or whether I inlined that function leaving it to the
+pragmas.
+
+
+[2013.03.07] {Added parallelism to the outer-loop of a multidim for}
+--------------------------------------------------------------------
+
+This much SHOULD be safe.  But I'm getting memory explosions.  At
+N=10K it runs (1.6s) but even then I see it using 60% of the memory on
+the box.  
+
+ACTUALLY... this memory leak seems to be happening even on my
+sequential C version.  How far does it go back?  Well... actually the
+behavior is a large memory footprint that's constant.  It uses 60% of
+3.7gb of memory on N=10K.  Since it should take 800Mb for a 10K matrix
+of doubles (and there are THREE doubles, e.g. 2.4gb), this is actually
+spot on.  No mystery.  After reenabling fusion the same example uses
+extremely little memory either sequentially or with Cilk:
+
+ * `2.06s` N=10K, sequential MINE machine
+ * `0.57s` N=10K, cilk, with parallel outer fold loop.
+ * `1.29s` N=15K, cilk, with parallel outer fold loop. 
+ * `2.28s` N=20K, cilk, with parallel outer fold loop.  
+ * `3.57s` N=25K, cilk, with parallel outer fold loop.    
+
+It is successfully vectorizing the INNER for loop.
+Ugh, getting some occasional segfaults there though... 
+
+ * `0.86s` N=25K, cilk, with parallel outer fold loop. HIVE
+ * `1.24s` N=30K, cilk, with parallel outer fold loop. HIVE 
+ * `1.63s` N=35K, cilk, with parallel outer fold loop. HIVE  
+ * `2.17s` N=40K, cilk, with parallel outer fold loop. HIVE   
+
+And then at 50K it segfaults reliably. 
+

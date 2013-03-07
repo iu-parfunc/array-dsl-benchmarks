@@ -238,6 +238,57 @@ namespace cl {
             CL_CHECK(clReleaseEvent(e));
             return buffer_map<T>(queue, b.mem, ptr);
         }
+
+		template<typename T, typename F>
+		event mapBuffer(buffer<T> &b, F f) {
+            cl_int status;
+            cl_event e;
+            T *ptr = (T *)clEnqueueMapBuffer(queue,
+                                             b.mem,
+                                             CL_FALSE, 
+                                             CL_MAP_READ | CL_MAP_WRITE,
+                                             0, 
+                                             sizeof(T) * b.count(),
+                                             0, 
+                                             NULL, 
+                                             &e, 
+                                             &status);
+            CL_CHECK(status);
+            CL_CHECK(clWaitForEvents(1, &e));
+            CL_CHECK(clReleaseEvent(e));
+
+			f(ptr);
+
+			CL_CHECK(clEnqueueUnmapMemObject(queue, b.mem, ptr, 0, NULL, &e));
+
+			return event(e);
+		}
+
+		template<typename T, typename F>
+		event mapBufferEvent(buffer<T> &b, F f) {
+            cl_int status;
+            cl_event e;
+            T *ptr = (T *)clEnqueueMapBuffer(queue,
+                                             b.mem,
+                                             CL_FALSE, 
+                                             CL_MAP_READ | CL_MAP_WRITE,
+                                             0, 
+                                             sizeof(T) * b.count(),
+                                             0, 
+                                             NULL, 
+                                             &e, 
+                                             &status);
+            CL_CHECK(status);
+
+			event ce(e);
+			ce.wait();
+
+			f(ptr, ce);
+
+			CL_CHECK(clEnqueueUnmapMemObject(queue, b.mem, ptr, 0, NULL, &e));
+
+			return event(e);
+		}
         
         // Enqueues the kernel and waits for it to complete.
         event execute(kernel &k, size_t global_size);
