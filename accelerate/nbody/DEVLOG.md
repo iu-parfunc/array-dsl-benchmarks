@@ -130,7 +130,29 @@ pragmas.
 
 This much SHOULD be safe.  But I'm getting memory explosions.  At
 N=10K it runs (1.6s) but even then I see it using 60% of the memory on
-the box.  Where on earth is that coming from?
+the box.  
 
 ACTUALLY... this memory leak seems to be happening even on my
-sequential C version.  How far does it go back?
+sequential C version.  How far does it go back?  Well... actually the
+behavior is a large memory footprint that's constant.  It uses 60% of
+3.7gb of memory on N=10K.  Since it should take 800Mb for a 10K matrix
+of doubles (and there are THREE doubles, e.g. 2.4gb), this is actually
+spot on.  No mystery.  After reenabling fusion the same example uses
+extremely little memory either sequentially or with Cilk:
+
+ * `2.06s` N=10K, sequential MINE machine
+ * `0.57s` N=10K, cilk, with parallel outer fold loop.
+ * `1.29s` N=15K, cilk, with parallel outer fold loop. 
+ * `2.28s` N=20K, cilk, with parallel outer fold loop.  
+ * `3.57s` N=25K, cilk, with parallel outer fold loop.    
+
+It is successfully vectorizing the INNER for loop.
+Ugh, getting some occasional segfaults there though... 
+
+ * `0.86s` N=25K, cilk, with parallel outer fold loop. HIVE
+ * `1.24s` N=30K, cilk, with parallel outer fold loop. HIVE 
+ * `1.63s` N=35K, cilk, with parallel outer fold loop. HIVE  
+ * `2.17s` N=40K, cilk, with parallel outer fold loop. HIVE   
+
+And then at 50K it segfaults reliably. 
+

@@ -16,6 +16,8 @@ N=100000
 
 all: getinput build
 
+#--------------------------------------------------------------------------------
+
 build: interp c cilk cuda
 
 interp: $(HS) dir
@@ -27,11 +29,18 @@ c: $(HS) dir
 cilk: $(HS) dir
 	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Cilk" Main.hs -o bin/naive_'$@'.exe
 
+cuda: $(HS) dir
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.CUDA" Main.hs -o bin/naive_'$@'.exe
+
+#--------------------------------------------------------------------------------
+
 debug-cilk:
 	GHC_OPTS="-DDEBUG $(GHC_OPTS)" ${MAKE} cilk
 
-cuda: $(HS) dir
-	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.CUDA" Main.hs -o bin/naive_'$@'.exe
+debug-c:
+	GHC_OPTS="-DDEBUG $(GHC_OPTS)" ${MAKE} c
+
+#--------------------------------------------------------------------------------
 
 dir:
 	mkdir -p bin/
