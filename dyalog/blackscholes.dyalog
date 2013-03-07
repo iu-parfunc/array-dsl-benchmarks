@@ -14,7 +14,7 @@
 
 ⍝ It follows up with the following CNDP function:
 
-    coeff←0.31938153 -0.356563782 1.781477937 -1.821255978 1.33027442
+    coeff←0.31938153 ¯0.356563782 1.781477937 ¯1.821255978 1.33027442
     rsqrt2pi←÷0.5*⍨○2
 
       CNDP←{
@@ -45,6 +45,29 @@
           os←1+?⍵⍴100
           oy←0.25+100÷⍨?⍵⍴1000
           ⍉↑sp os oy
+      }
+      
+⍝ Now let's see if we can make the above faster. 
+⍝ This comes from the EspenHaug.com/APL.png code for Black Scholes
+⍝ The main adjustments here come from using large scalar operations
+⍝ over simple vectors as opposed to nested vectors. We also 
+⍝ eliminate the need for the HORNER function.
+
+      CNDP2←{
+          K←÷1+0.2316419×L←|⍵
+          R←(÷(○2)*0.5)×(*(L×L)÷¯2)×{coeff+.×⍵*1+⍳5}¨K
+          (1 ¯1)[B]×(0 ¯1)[B←⍵≥0]+R
+      }
+
+    r←riskfree
+    v←volatility
+
+      BS∆V1←{S X T←⊂[0]⍵
+          expRT←*(-r)×T
+          D1←((⍟S÷X)+(r+2÷⍨v*2)×T)÷vsqrtT←v×T*0.5
+          D2←D1-vsqrtT
+          R←(S×CD1←CNDP2 D1)-X×expRT×CD2←CNDP2 D2
+          R,[0.5]((X×expRT×1-CD2)-S×1-CD1)
       }
 
 :EndNamespace
