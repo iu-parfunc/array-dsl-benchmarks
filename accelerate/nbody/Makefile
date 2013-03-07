@@ -5,7 +5,9 @@ ifeq ($(GHC),)
   GHC=ghc-7.6.1
 endif
 
-GHC_OPTS= -threaded -O2
+ifeq ($(GHC_OPTS),)
+  GHC_OPTS= -threaded -O2
+endif
 
 INFILE=/tmp/uniform.3dpts
 OUTFILE=/tmp/nbody_out.3dpts
@@ -24,6 +26,9 @@ c: $(HS) dir
 
 cilk: $(HS) dir
 	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Cilk" Main.hs -o bin/naive_'$@'.exe
+
+debug-cilk:
+	GHC_OPTS="-DDEBUG $(GHC_OPTS)" ${MAKE} cilk
 
 cuda: $(HS) dir
 	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.CUDA" Main.hs -o bin/naive_'$@'.exe

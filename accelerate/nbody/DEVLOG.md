@@ -99,3 +99,29 @@ Geforce 590GTX:
 
  * `0.8s` N=20K
  
+[2013.03.07] {Adding hacks to C backend to avoid ICC vectorization pitfalls}
+----------------------------------------------------------------------------
+
+Bottom line: "__declspec(vector)" is NOT a safe way to vectorize for
+machine generated code.  It has arbitrary rules for what will
+vectorize and what will throw an error, and I'm not aware of a way to
+turn those errors into warnings (i.e. fall back to non-vectorized
+code).  For example, this line breaks vectorization:
+
+    if ((bool)(!((bool)((bool)(e11 == e12) && (bool)((bool)(e8 == e7) && (bool)(e10 == e9))))))
+
+But removing the casts allows vectorization to succeed.
+
+For now I'm adding a few hacks to get around this kind of thing, but
+ultimately I think it means that the Cilk backend will have to be
+restricted to using #pragma ivdep and #pragma vector always, and
+inlining everything into a loop rather than having a separate
+elemental function.
+
+This may not be so bad though, because in the simple test I performed
+(hacking up one of our generated files), ICC generated the EXACT SAME
+BINARY, irrespective of whether I called an elemental function from a
+_Cilk_for, or whether I inlined that function leaving it to the
+pragmas.
+
+
