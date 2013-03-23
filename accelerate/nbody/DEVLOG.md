@@ -156,3 +156,51 @@ Ugh, getting some occasional segfaults there though...
 
 And then at 50K it segfaults reliably. 
 
+
+[2013.03.23] {Getting numbers from Delta}
+--------------------------------------------------------------------
+
+First, with the CUDA backend on ONE Tesla 2070:
+
+ * `4.25s`  N=10K (and then 7.31s... inconsistent, bimodal, saw that again)
+ * `6.16s` N=20K
+ * `19.69s` N=100K 
+
+Also, it's burning 100% CPU and I can't see a job on nvidia-smi.  HUH?
+(but it can't be using the interp because that takes WAY longer)
+
+Is this without Trafo fusion?
+
+Ok, it eventually showed up like this:
+
+    +------------------------------------------------------+                       
+    | NVIDIA-SMI 4.304.54   Driver Version: 304.54         |                       
+    |-------------------------------+----------------------+----------------------+
+    | GPU  Name                     | Bus-Id        Disp.  | Volatile Uncorr. ECC |
+    | Fan  Temp  Perf  Pwr:Usage/Cap| Memory-Usage         | GPU-Util  Compute M. |
+    |===============================+======================+======================|
+    |   0  Tesla C2075              | 0000:02:00.0     Off |                    0 |
+    | 30%   55C    P0   149W / 225W |   1%   69MB / 5375MB |     99%      Default |
+    +-------------------------------+----------------------+----------------------+
+    |   1  Tesla C2075              | 0000:84:00.0     Off |                    0 |
+    | 30%   48C   P12    33W / 225W |   0%   10MB / 5375MB |      0%      Default |
+    +-------------------------------+----------------------+----------------------+
+
+    +-----------------------------------------------------------------------------+
+    | Compute processes:                                               GPU Memory |
+    |  GPU       PID  Process name                                     Usage      |
+    |=============================================================================|
+    |    0     30317  ./test.exe                                            57MB  |
+    +-----------------------------------------------------------------------------+
+
+For 100K run (which took 22s though sometimes as little as 16.5).
+
+But... but... it takes 0.7s for 10K on my cruddy GPU in veronica (GT
+430)!?  What gives?
+
+Is there any chance the CUDA compile part is taking a crazy long time?
+Need to get accelerate to split out compile time.
+
+There is a disscrepancy here because 100K should take one hundred
+times as long as 10K due to N^2 complexity.  And yet the running time
+is 3X more not 100X more...  
