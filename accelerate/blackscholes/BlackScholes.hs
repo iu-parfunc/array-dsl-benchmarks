@@ -1,4 +1,4 @@
-
+{-# LANGUAGE CPP #-}
 module Main where
 
 import Random
@@ -8,7 +8,14 @@ import Data.Array.IArray     as IArray
 import Data.Array.Accelerate as Acc
 import Prelude               as P
 
-import qualified  Data.Array.Accelerate.Cilk as Cilk
+#ifdef ACCBACKEND
+import qualified ACCBACKEND as Bkend
+#else
+import qualified Data.Array.Accelerate.CUDA as Bkend
+#endif
+
+import           Data.Time.Clock (getCurrentTime, diffUTCTime)
+
 import Control.Exception (evaluate)
 import System.Environment (getArgs)
 
@@ -107,9 +114,14 @@ main = do args <- getArgs
 
           (_,run_acc) <- run 100 -- 0000
 
-          let vec = Cilk.run $ run_acc ()
+          let vec = Bkend.run $ run_acc ()
 
+          t1 <- getCurrentTime
           evaluate vec
+          t2 <- getCurrentTime
+          let dt = t2 `diffUTCTime` t1
+          putStrLn$ "SELFTIMED-with-compile: "++ show dt
+
 
 --	  putStrLn$ "Final checksum: "++ show sum
   
