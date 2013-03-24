@@ -98,21 +98,11 @@ run n = withSystemRandom $ \gen -> do
 
 
 main = do args <- getArgs 
-          -- let (numOptions, granularity) =
-          --      case args of 
-  	  --        []      -> (10000, 1000)
-  	  --        [b]     -> (10, read b)
-	  --        [b,n] -> (read n, read b)
+          let inputSize = case args of
+                            [] -> 100
+                            [sz] -> read sz
 
-          -- if granularity > numOptions
-	  --  then error "Granularity must be less than numOptions!!"
-	  --  else return ()
-
---	  putStrLn$ "Running blackscholes, numOptions "++ show numOptions ++ " and block size " ++ show granularity
---          let numChunks = numOptions `quot` granularity
---	        results = runPar$ parMap (computeSegment granularity . (* granularity)) [0..numChunks-1]
-
-          (_,run_acc) <- run 100 -- 0000
+          (_,run_acc) <- run inputSize -- 0000
 
           let vec = Bkend.run $ run_acc ()
 
