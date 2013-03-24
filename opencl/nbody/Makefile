@@ -1,4 +1,4 @@
-CXX=g++
+CXX=clang++
 
 CXXFLAGS = --std=c++0x -O -I../common -I/usr/local/cuda/include -DOPTIMIZED
 
