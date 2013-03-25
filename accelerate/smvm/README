@@ -1,0 +1,2 @@
+requires vector-algorithms package, which must be cabal-installed due to
+c library dependencies.
