@@ -1,11 +1,11 @@
 CXX=clang++
 
-CXXFLAGS = --std=c++0x -O -I../common -I/usr/local/cuda/include -DOPTIMIZED
+CXXFLAGS = -O -I../common -I/usr/local/cuda/include -DOPTIMIZED
 
 ifeq ($(shell uname), Darwin)
 	LDFLAGS  = -framework OpenCL
 else
-	LDFLAGS = -lOpenCL
+	LDFLAGS = -lOpenCL -lpthread
 endif
 
 OBJS = nbody.o ../common/cl++.o
