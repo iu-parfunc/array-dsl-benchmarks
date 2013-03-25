@@ -204,3 +204,31 @@ Need to get accelerate to split out compile time.
 There is a disscrepancy here because 100K should take one hundred
 times as long as 10K due to N^2 complexity.  And yet the running time
 is 3X more not 100X more...  
+
+Next round:
+----------------------------
+
+Here are times WITHOUT compilation:
+
+ * `0.1s` - 10K 
+ * `0.393s` - 20K
+
+Not too shabby!!  But that may not be counting data transfer either.
+
+
+
+[2013.03.24] {Building nbody with trafo}
+========================================
+
+Trafo does succeed in fusing nbody (fold-zipwith-replicate-replicate)
+down to a fold+generate.  But, it generates bad code for the shapes:
+
+    generate (intersect (indexFull (Z :. All :. shapeSize ((shape a0))) (shape a0))
+                        (indexFull (Z :. shapeSize ((shape a0)) :. All) (shape a0)))
+
+We'll need to support the Intersect node to support that.
+
+Oh, actually, contrary to my expectation, we didn't retrieve the sizes
+statically for this example either.  In fact, we fail to size the
+replicates.  There's no reason for that.
+
