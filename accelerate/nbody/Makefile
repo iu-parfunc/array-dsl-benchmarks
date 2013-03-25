@@ -2,7 +2,7 @@
 HS=$(shell find -name "[A-Z]*.hs")
 
 ifeq ($(GHC),)
-  GHC=ghc-7.6.1
+  GHC=ghc
 endif
 
 ifeq ($(GHC_OPTS),)
@@ -31,6 +31,9 @@ cilk: $(HS) dir
 
 cuda: $(HS) dir
 	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.CUDA" Main.hs -o bin/naive_'$@'.exe
+
+fission: $(HS) dir
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.BackendKit.FissionTest" Main.hs -o bin/naive_'$@'.exe
 
 #--------------------------------------------------------------------------------
 
