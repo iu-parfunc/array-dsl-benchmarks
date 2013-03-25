@@ -1,6 +1,7 @@
 #define __CL_ENABLE_EXCEPTIONS
 
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <stdlib.h>
 #include <cassert>
@@ -56,17 +57,17 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
     for(int i = 0; i < devs.size(); ++i)
         print_device_info(devs[i]);
 
-    auto dev = devs[0];
+    device dev = devs[0];
 
     context ctx(devs);
-	auto q = ctx.createCommandQueue(dev, true);
+	command_queue q = ctx.createCommandQueue(dev, true);
 
-    auto prog = ctx.createProgramFromSourceFile("nbody.cl");
+    program prog = ctx.createProgramFromSourceFile("nbody.cl");
 
     const int CUTOFF = 1;
 
-	auto data = read_data(cin);
-	auto N = data.size();
+	vector<cl_double3> data = read_data(cin);
+	size_t N = data.size();
 
     stringstream options;
     options << "-DLOCAL_SIZE=" << LOCAL_SIZE;
@@ -81,22 +82,22 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
 
 	cout << "Read " << data.size() << " points" << endl;
 
-	auto points = ctx.createBuffer<cl_double3>(N);
-    auto forces = ctx.createBuffer<cl_double3>(N);
+	buffer<cl_double3> points = ctx.createBuffer<cl_double3>(N);
+    buffer<cl_double3> forces = ctx.createBuffer<cl_double3>(N);
 
-    auto global_size = LOCAL_SIZE * NUM_BLOCKS;
+    cl_ulong global_size = LOCAL_SIZE * NUM_BLOCKS;
 
-	auto transfer_e = q.mapBuffer(points, [&](cl_double3 *xp) {
-			for(int i = 0; i < N; ++i) {
-				xp[i] = data[i];
-			}
-		});
+	buffer_map<cl_double3> xp = q.mapBuffer(points);
+	for(int i = 0; i < N; ++i) {
+		xp[i] = data[i];
+	}
+	event transfer_e = xp.unmap();
 	
-#define LOAD_KERNEL(x) auto x = prog.createKernel(#x)
+#define LOAD_KERNEL(x) kernel x = prog.createKernel(#x)
 #ifndef OPTIMIZED
-    auto point_cols = ctx.createBuffer<cl_double3>(N * N);
-    auto point_rows = ctx.createBuffer<cl_double3>(N * N);
-    auto force_mat = ctx.createBuffer<cl_double3>(N * N);
+    buffer<cl_double3> point_cols = ctx.createBuffer<cl_double3>(N * N);
+    buffer<cl_double3> point_rows = ctx.createBuffer<cl_double3>(N * N);
+    buffer<cl_double3> force_mat = ctx.createBuffer<cl_double3>(N * N);
 
     LOAD_KERNEL(replicate_rows);
     LOAD_KERNEL(replicate_cols);
@@ -144,30 +145,31 @@ int nbody(cl_device_type type, int LOCAL_SIZE) {
 	nbody_opt.setArg(0, points);
 	nbody_opt.setArg(1, forces);
 
-	auto force_e = q.execute(nbody_opt, global_size, LOCAL_SIZE);
+	event force_e = q.execute(nbody_opt, global_size, LOCAL_SIZE);
 	force_e.wait();
 
-	auto compute_start = force_e.get_start();
+	cl_ulong compute_start = force_e.get_start();
 #endif
 #undef LOAD_KERNEL
 
 	// write out the results
     cl_ulong stop;
-	q.mapBufferEvent(forces, [&](cl_double3 *forces, event &e) {
-			stop = e.get_stop();
+	{
+		buffer_map<cl_double3> f = q.mapBuffer(forces);
+		stop = f.start_event().get_stop();
 
-			ofstream out("nbody.3dpts");
-			out << "pbbs_sequencePoint3d" << endl;
+		ofstream out("nbody.3dpts");
+		out << "pbbs_sequencePoint3d" << endl;
+		out << setprecision(20);
+		for(int i = 0; i < N; ++i) {
+			out << f[i].s[0] << " ";
+			out << f[i].s[1] << " ";
+			out << f[i].s[2] << endl;
+		}
+	}
 
-			for(int i = 0; i < N; ++i) {
-				out << forces[i].s[0] << " ";
-				out << forces[i].s[1] << " ";
-				out << forces[i].s[2] << endl;
-			}
-		});
-
-	auto start = transfer_e.get_start();
-	auto compute_stop = force_e.get_stop();
+	cl_ulong start = transfer_e.get_start();
+	cl_ulong compute_stop = force_e.get_stop();
 
 	cout << "SELFTIMED (compute)          "
 		 << double(compute_stop - compute_start) / 1e9 << endl;
@@ -190,7 +192,7 @@ void print_device_info(device d)
     cout << "  Host-unified Memory: "
          << (d.host_unified_memory() ? "yes" : " no") << endl;
     cout << "  Max Work Group Size: " << d.max_work_group_size() << endl;
-    auto s = d.max_work_item_dimensions();
+    vector<size_t> s = d.max_work_item_dimensions();
     cout << "  Max Work Item Sizes: ("
          << s[0] << ", " << s[1] << ", " << s[2] << ")" << endl;
     cout << "  Float Vector Width: " << d.native_float_vector_width() << endl;
