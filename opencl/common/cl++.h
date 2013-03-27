@@ -164,6 +164,22 @@ namespace cl {
         kernel createKernel(std::string name);
     };
     
+    // OpenCL Event
+    class event {
+        friend class command_queue;
+
+        cl_event e;
+        
+    public:
+        event(cl_event e);
+        ~event();
+		
+        void wait();
+
+        uint64_t get_start();
+        uint64_t get_stop();
+    };
+	
     // Allows easier access to a buffer
     template<typename T>
     class buffer_map {
@@ -172,40 +188,31 @@ namespace cl {
         cl_command_queue queue;
         cl_mem mem;
         T *ptr;
+		event e;
         
-        buffer_map(cl_command_queue queue, cl_mem mem, T *ptr) 
-            : queue(queue), mem(mem), ptr(ptr) 
+        buffer_map(cl_command_queue queue, cl_mem mem, T *ptr, cl_event e) 
+            : queue(queue), mem(mem), ptr(ptr), e(e)
         {
         };
     public:
         ~buffer_map() {
+			unmap().wait();
+        }
+
+		event unmap() {
             cl_event e;
             CL_CHECK(clEnqueueUnmapMemObject(queue, mem, ptr, 0, NULL, &e));
-            CL_CHECK(clWaitForEvents(1, &e));
-            CL_CHECK(clReleaseEvent(e));
-        }
+			ptr = NULL;
+			return event(e);
+		}
         
+		event &start_event() { return e; }
+
         T &operator[](size_t i) {
             return ptr[i];
         }
         
         operator T*() { return ptr; };
-    };
-
-    // OpenCL Event
-    class event {
-        friend class command_queue;
-
-        cl_event e;
-        
-        event(cl_event e);
-    public:
-        ~event();
-
-        void wait();
-
-        uint64_t get_start();
-        uint64_t get_stop();
     };
 
     // OpenCL Command Queue
@@ -235,8 +242,7 @@ namespace cl {
                                              &status);
             CL_CHECK(status);
             CL_CHECK(clWaitForEvents(1, &e));
-            CL_CHECK(clReleaseEvent(e));
-            return buffer_map<T>(queue, b.mem, ptr);
+            return buffer_map<T>(queue, b.mem, ptr, e);
         }
 
 		template<typename T, typename F>

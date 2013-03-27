@@ -53,6 +53,9 @@ getinput: $(INFILE)
 $(INFILE):
 	./inputGenerator/uniform -s -d 3 $(N) $@
 
+../../pbbs/nBody/common/nbodyCheck:
+	(cd ../../pbbs/nBody/common/; make)
+
 check: $(INFILE)
 	head -n $(shell wc -l $(OUTFILE) | awk '{ print $$1 }') $(INFILE) > /tmp/short_uniform.3dpts
 	../../pbbs/nBody/common/nbodyCheck /tmp/short_uniform.3dpts $(OUTFILE)
