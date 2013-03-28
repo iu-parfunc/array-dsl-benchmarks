@@ -42,8 +42,8 @@ type Velocity   = (R, R, R)
 type Position   = (R, R, R)
 type Accel      = (R, R, R)
 
-inputFile = "/tmp/uniform.3dpts"
-outputFile = "/tmp/nbody_out.3dpts"
+inputFile = "./uniform.3dpts"
+outputFile = "./nbody_out.3dpts"
 
 --------------------------------------------------------------------------------
 -- Reading/writing file data

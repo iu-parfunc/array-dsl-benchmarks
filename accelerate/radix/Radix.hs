@@ -106,7 +106,7 @@ main = do
                     [sz] -> read sz
   run_acc <- run inputSize
   t1 <- getCurrentTime
-  evaluate $ run_acc ()
+  evaluate $ Bkend.run $ run_acc ()
   t2 <- getCurrentTime
   let dt = t2 `diffUTCTime` t1
   putStrLn $ "SELFTIMED-with-compile: " ++ show dt
