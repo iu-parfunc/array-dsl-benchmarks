@@ -9,8 +9,8 @@ ifeq ($(GHC_OPTS),)
   GHC_OPTS= -threaded -O2
 endif
 
-INFILE=/tmp/uniform.3dpts
-OUTFILE=/tmp/nbody_out.3dpts
+INFILE=./uniform.3dpts
+OUTFILE=./nbody_out.3dpts
 
 N=100000
 
@@ -18,7 +18,7 @@ all: getinput build
 
 #--------------------------------------------------------------------------------
 
-build: interp c cilk cuda
+build: interp c cilk spmd
 
 interp: $(HS) dir
 	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.Interpreter" Main.hs -o bin/naive_'$@'.exe
@@ -34,6 +34,9 @@ cuda: $(HS) dir
 
 fission: $(HS) dir
 	$(GHC) $(GHC_OPTS) -DACCBACKEND="Data.Array.Accelerate.BackendKit.FissionTest" Main.hs -o bin/naive_'$@'.exe
+
+spmd: $(HS) dir
+	$(GHC) $(GHC_OPTS) -DACCBACKEND="SPMD" Main.hs -o bin/naive_'$@'.exe
 
 #--------------------------------------------------------------------------------
 
