@@ -101,7 +101,7 @@ main = do
                    return (Just $ read n)
 #ifdef DEBUG
 #else
-  putStrLn$ "NBODY: Reading input file, "++show n++" points"
+  putStrLn$ "NBODY: Reading requested prefix of input file..."
   raw <- readGeomFile n inputFile
   putStrLn$ "Done reading, converting to Acc array.."
 #endif
