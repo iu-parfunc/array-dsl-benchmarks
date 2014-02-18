@@ -11,7 +11,8 @@ import           Data.Array.Accelerate          ((:.),Z(Z))
 #ifdef ACCBACKEND
 import qualified ACCBACKEND as Bkend
 #else
-import qualified Data.Array.Accelerate.CUDA as Bkend
+#error "Must specify ACCBACKEND CPP variable to build this nbody benchmark."
+-- import qualified Data.Array.Accelerate.CUDA as Bkend
 #endif
 import qualified Data.Array.Accelerate.Interpreter as I
 
