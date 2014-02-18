@@ -12,6 +12,7 @@ endif
 INFILE=./uniform.3dpts
 OUTFILE=./nbody_out.3dpts
 
+# Generate 100K points, but we may not use all:
 N=100000
 
 all: getinput build
@@ -53,7 +54,10 @@ dir:
 
 getinput: $(INFILE)
 
-$(INFILE):
+./inputGenerator/uniform: 
+	(cd inputGenerator/; make uniform)
+
+$(INFILE): ./inputGenerator/uniform
 	./inputGenerator/uniform -s -d 3 $(N) $@
 
 ../../pbbs/nBody/common/nbodyCheck:
@@ -64,10 +68,21 @@ check: $(INFILE)
 	../../pbbs/nBody/common/nbodyCheck /tmp/short_uniform.3dpts $(OUTFILE)
 
 
-# See ../../README for the "calling conventions".
-run:
-	$(EXE) $(P1)
+# Standard benchmark size:
+P1=10000
 
+# See ../../README for the "calling conventions".
+run1:
+	./bin/naive_c.exe $(P1)
+
+run2:
+	./bin/naive_cilk.exe $(P1)
+
+run3:
+	./bin/naive_cuda.exe $(P1)
+
+run4:
+	./bin/naive_spmd.exe $(P1)
 
 deps:
 	cabal install bytestring-lexing

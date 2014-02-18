@@ -95,12 +95,13 @@ main :: IO ()
 main = do
   args <- getArgs
   n <- case args of
-         []  -> return Nothing
-         [n] -> do putStrLn$ "NBODY size: N="++ n
+         []  -> do putStrLn "Using default size for input."
+                   return Nothing
+         [n] -> do putStrLn$ "NBODY size on command line: N="++ show n
                    return (Just $ read n)
 #ifdef DEBUG
 #else
-  putStrLn$ "NBODY: Reading input file..."
+  putStrLn$ "NBODY: Reading input file, "++show n++" points"
   raw <- readGeomFile n inputFile
   putStrLn$ "Done reading, converting to Acc array.."
 #endif
