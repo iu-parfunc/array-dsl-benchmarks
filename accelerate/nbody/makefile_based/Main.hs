@@ -97,12 +97,13 @@ main = do
   args <- getArgs
   n <- case args of
          []  -> do putStrLn "Using default size for input."
-                   return Nothing
+--                   return Nothing
+                   return (Just 100)
          [n] -> do putStrLn$ "NBODY size on command line: N="++ show n
                    return (Just $ read n)
 #ifdef DEBUG
 #else
-  putStrLn$ "NBODY: Reading requested prefix of input file..."
+  putStrLn$ "NBODY: Reading requested prefix of input file... "++show n
   raw <- readGeomFile n inputFile
   putStrLn$ "Done reading, converting to Acc array.."
 #endif
