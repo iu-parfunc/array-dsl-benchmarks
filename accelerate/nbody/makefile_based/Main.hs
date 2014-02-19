@@ -43,7 +43,7 @@ type Velocity   = (R, R, R)
 type Position   = (R, R, R)
 type Accel      = (R, R, R)
 
-inputFile = "./uniform.3dpts"
+defaultInputFile = "./uniform.3dpts"
 outputFile = "./nbody_out.3dpts"
 
 --------------------------------------------------------------------------------
@@ -95,16 +95,21 @@ writeGeomFile path arr = do
 main :: IO ()
 main = do
   args <- getArgs
-  n <- case args of
+  (n,file) <- case args of
          []  -> do putStrLn "Using default size for input."
 --                   return Nothing
-                   return (Just 100)
+                   return (Just 100, defaultInputFile)
          [n] -> do putStrLn$ "NBODY size on command line: N="++ show n
-                   return (Just $ read n)
+                   return (Just $ read n, defaultInputFile)
+
+         [n,f] -> do putStrLn$ "NBODY size on command line: N="++ show n++", and input file: "++ f
+                     return (Just $ read n, f)
+
+-- Temporary: for debugging we aren't using a file at all:
 #ifdef DEBUG
 #else
   putStrLn$ "NBODY: Reading requested prefix of input file... "++show n
-  raw <- readGeomFile n inputFile
+  raw <- readGeomFile n file
   putStrLn$ "Done reading, converting to Acc array.."
 #endif
 
