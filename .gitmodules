@@ -1,3 +1,4 @@
 [submodule "pbbs"]
 	path = pbbs
-	url = https://github.com/iu-parfunc/pbbs.git
+#	url = https://github.com/iu-parfunc/pbbs.git
+	url = git@github.com:iu-parfunc/pbbs.git
