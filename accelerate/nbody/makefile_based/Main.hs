@@ -113,10 +113,13 @@ main = do
 #ifdef DEBUG
 #else
   putStrLn$ "NBODY: Reading requested prefix of input file... "++show n
-  raw <- readGeomFile n file
-  putStrLn$ "Done reading, converting to Acc array.."
+  tBegin <- getCurrentTime
+  raw    <- readGeomFile n file
+  tEnd   <- getCurrentTime
+  putStrLn$ "Done reading (took "++show (diffUTCTime tEnd tBegin)++"), converting to Acc array.."
 #endif
 
+  tBegin <- getCurrentTime
   let input :: A.Acc (A.Vector Position)
 #ifdef DEBUG      
       input = A.generate (A.index1$ A.constant$ fromJust n) $ \ix ->
@@ -132,7 +135,9 @@ main = do
   evaluate input0
 #endif
   performGC
-  putStrLn$ "Input in CPU memory, starting benchmark..."
+  tEnd   <- getCurrentTime
+
+  putStrLn$ "Input in CPU memory and did GC (took "++show (diffUTCTime tEnd tBegin)++"), starting benchmark..."
   tBegin <- getCurrentTime
   (times,output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (calcAccels input)
   tEnd   <- getCurrentTime
