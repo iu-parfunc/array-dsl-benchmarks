@@ -69,13 +69,16 @@ main = do
 
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
- [ nbody { target="./accelerate/nbody/seq_c/", progname= Just "accelerate-nbody-seqC" }
- , nbody { target="./accelerate/nbody/cilk/", progname= Just "accelerate-nbody-cilk" }
- , nbody { target="./accelerate/nbody/cuda/", progname= Just "accelerate-nbody-cuda" }
+ [ (nbody "seqC") { target="./accelerate/nbody/seq_c/", progname= Just "accelerate-nbody" }
+ , (nbody "cilk") { target="./accelerate/nbody/cilk/", progname= Just "accelerate-nbody" }
+ , (nbody "cuda") { target="./accelerate/nbody/cuda/", progname= Just "accelerate-nbody" }
  ]
  where 
-  nbody = Benchmark { cmdargs=["10000","./accelerate/nbody/makefile_based/uniform.3dpts"], 
-                      configs= And[], benchTimeOut= Just 50, target="", progname=Nothing }
+  nbody var = Benchmark { cmdargs=["10000"], 
+                          configs= And[ Set (Variant var)
+                                        (RuntimeEnv "ACCELERATE_INPUT_FILE"
+                                         "./accelerate/nbody/makefile_based/uniform.3dpts")], 
+                          benchTimeOut= Just 50, target="", progname=Nothing }
 
 --------------------------------------------------------------------------------
 

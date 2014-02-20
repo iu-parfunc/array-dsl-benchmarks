@@ -29,6 +29,7 @@ import qualified Data.ByteString.Char8 as B
 -- import qualified Data.ByteString.Lazy.Char8 as B
 import System.Environment
 import System.IO
+import System.Posix.Env (getEnv)
 import System.Mem  (performGC)
 import Data.Maybe (fromJust)
 import Debug.Trace 
@@ -95,16 +96,16 @@ writeGeomFile path arr = do
 main :: IO ()
 main = do
   args <- getArgs
-  (n,file) <- case args of
+  (n) <- case args of
          []  -> do putStrLn "Using default size for input."
---                   return Nothing
-                   return (Just 100, defaultInputFile)
+                   return (Just 100)
          [n] -> do putStrLn$ "NBODY size on command line: N="++ show n
-                   return (Just $ read n, defaultInputFile)
-
-         [n,f] -> do putStrLn$ "NBODY size on command line: N="++ show n++", and input file: "++ f
-                     return (Just $ read n, f)
-
+                   return (Just $ read n)
+                     
+  let file = case getEnv "ACCELERATE_INPUT_FILE" of
+              Nothing -> defaultInputFile
+              Just s -> s
+    
 -- Temporary: for debugging we aren't using a file at all:
 #ifdef DEBUG
 #else
