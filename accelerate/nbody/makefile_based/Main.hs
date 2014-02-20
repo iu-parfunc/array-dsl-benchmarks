@@ -22,6 +22,7 @@ import Control.Monad     (forM_,when)
 import Prelude                                  as P
 import           Data.Char (isSpace)
 import qualified Data.Array.Unboxed             as U
+import qualified Data.List as L
 import           Data.Time.Clock (getCurrentTime, diffUTCTime)
 -- import qualified Data.Array.IO                  as Arr
 import           Data.ByteString.Lex.Double (readDouble)
@@ -29,7 +30,7 @@ import qualified Data.ByteString.Char8 as B
 -- import qualified Data.ByteString.Lazy.Char8 as B
 import System.Environment
 import System.IO
-import System.Posix.Env (getEnv)
+import System.Environment (getEnvironment)
 import System.Mem  (performGC)
 import Data.Maybe (fromJust)
 import Debug.Trace 
@@ -101,8 +102,8 @@ main = do
                    return (Just 100)
          [n] -> do putStrLn$ "NBODY size on command line: N="++ show n
                    return (Just $ read n)
-                     
-  let file = case getEnv "ACCELERATE_INPUT_FILE" of
+  env <- getEnvironment
+  let file = case L.lookup "ACCELERATE_INPUT_FILE" env of
               Nothing -> defaultInputFile
               Just s -> s
     
