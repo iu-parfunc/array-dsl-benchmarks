@@ -72,8 +72,10 @@ bls_desktop =
   allthree nbody ++
   concat [ allthree (scaleFlops args) 
          | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..8]]
-         , let sz = "500000" ]
+         ]
  where 
+  sz = "500000"
+
   -- Run with all of the backends:
   allthree fn = 
     let root = target (fn "seqC") in 
