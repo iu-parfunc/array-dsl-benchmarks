@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE NamedFieldPuns  #-}
 {-# LANGUAGE OverloadedStrings #-}
 --
 -- An N-Body simulation
@@ -15,6 +16,7 @@ import qualified ACCBACKEND as Bkend
 -- import qualified Data.Array.Accelerate.CUDA as Bkend
 #endif
 import qualified Data.Array.Accelerate.Interpreter as I
+import           Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..))
 
 -- system
 import Control.Exception (evaluate)
@@ -134,12 +136,16 @@ main = do
   putStrLn$ "Input in CPU memory, starting benchmark..."
   t1 <- getCurrentTime
 --  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 1e-10) input
+
   output <- evaluate $ Bkend.run $ calcAccels input
+  (AccTiming{compileTime,runTime,copyTime},output) <- runTimed Bkend.defaultBackend Nothing (calcAccels input)
   t2 <- getCurrentTime
   let dt = diffUTCTime t2 t1
   putStrLn$ "  Result prefix(4): "++ show(P.take 3$ A.toList output)
   putStrLn$ "  Result shape "++ show(A.arrayShape output)
-  putStrLn$ "SELFTIMED-with-compile: "++ show dt
+  putStrLn$ "SELFTIMED-compile: "++ show compileTime
+  putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
+--  putStrLn$ "SELFTIMED-with-compile: "++ show dt
 
   putStrLn$ "Writing output file to: "++ outputFile
   writeGeomFile outputFile output
