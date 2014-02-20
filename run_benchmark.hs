@@ -69,16 +69,30 @@ main = do
 
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
- [ (nbody "seqC") { target="./accelerate/nbody/seq_c/", progname= Just "accelerate-nbody" }
- , (nbody "cilk") { target="./accelerate/nbody/cilk/", progname= Just "accelerate-nbody" }
- , (nbody "cuda") { target="./accelerate/nbody/cuda/", progname= Just "accelerate-nbody" }
- ]
+  allthree nbody ++
+  concat [ allthree (scaleFlops args) 
+         | args <- [ [show (2^n), "500000"] | n <- [0..8]] ]
  where 
-  nbody var = Benchmark { cmdargs=["10000"], 
-                          configs= And[ Set (Variant var)
+  -- Run with all of the backends:
+  allthree fn = 
+    let root = target (fn "seqC") in 
+    [ (fn "seqC") { target= root++"/seq_c/" }
+    , (fn "cilk") { target= root++"/cilk/"  }
+    , (fn "cuda") { target= root++"/cuda/"  }
+    ]
+
+  baseline = Benchmark { cmdargs=[], configs= And[], benchTimeOut=Just 50, target="", progname=Nothing }
+  nbody var = baseline { cmdargs=["10000"], 
+                         configs= And[ Set (Variant var)
                                         (RuntimeEnv "ACCELERATE_INPUT_FILE"
-                                         "./accelerate/nbody/makefile_based/uniform.3dpts")], 
-                          benchTimeOut= Just 50, target="", progname=Nothing }
+                                         "./accelerate/nbody/makefile_based/uniform.3dpts")],
+                         target= "./accelerate/nbody", -- Just the root
+                         progname= Just "accelerate-nbody" }
+  scaleFlops args var = 
+      baseline { cmdargs=args, 
+                 configs= And[ Set (Variant var) (CompileParam "")],
+                 target= "./accelerate/scale_flops", -- Just the root
+                 progname= Just "accelerate-scaleFlops" }
 
 --------------------------------------------------------------------------------
 
