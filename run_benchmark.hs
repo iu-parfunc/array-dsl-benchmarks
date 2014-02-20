@@ -71,7 +71,8 @@ bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
   allthree nbody ++
   concat [ allthree (scaleFlops args) 
-         | args <- [ [show (2^n), "500000"] | n <- [0..8]] ]
+         | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..8]]
+         , let sz = "500000" ]
  where 
   -- Run with all of the backends:
   allthree fn = 
