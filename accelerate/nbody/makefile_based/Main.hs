@@ -133,12 +133,14 @@ main = do
 #endif
   performGC
   putStrLn$ "Input in CPU memory, starting benchmark..."
-  output <- evaluate $ Bkend.run $ calcAccels input
+  tBegin <- getCurrentTime
   (times,output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (calcAccels input)
+  tEnd   <- getCurrentTime
   let AccTiming{compileTime,runTime,copyTime} = times
   putStrLn$ "  Result prefix(4): "++ show(P.take 3$ A.toList output)
   putStrLn$ "  Result shape "++ show(A.arrayShape output)
   putStrLn$ "  All timing: "++ show times
+  putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
   putStrLn$ "JITTIME: "++ show compileTime
   putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
   putStrLn$ "Writing output file to: "++ outputFile
