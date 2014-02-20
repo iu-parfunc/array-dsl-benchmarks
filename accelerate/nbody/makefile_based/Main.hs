@@ -132,24 +132,17 @@ main = do
   evaluate input0
 #endif
   performGC
-  
   putStrLn$ "Input in CPU memory, starting benchmark..."
-  t1 <- getCurrentTime
---  output <- evaluate $ Bkend.run $ Naive.calcAccels (A.constant 1e-10) input
-
   output <- evaluate $ Bkend.run $ calcAccels input
-  (AccTiming{compileTime,runTime,copyTime},output) <- runTimed Bkend.defaultBackend Nothing (calcAccels input)
-  t2 <- getCurrentTime
-  let dt = diffUTCTime t2 t1
+  (times,output) <- runTimed Bkend.defaultBackend Nothing (calcAccels input)                    
+  let AccTiming{compileTime,runTime,copyTime} = times
   putStrLn$ "  Result prefix(4): "++ show(P.take 3$ A.toList output)
   putStrLn$ "  Result shape "++ show(A.arrayShape output)
-  putStrLn$ "SELFTIMED-compile: "++ show compileTime
+  putStrLn$ "  All timing: "++ show times
+  putStrLn$ "JITTIME: "++ show compileTime
   putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
---  putStrLn$ "SELFTIMED-with-compile: "++ show dt
-
   putStrLn$ "Writing output file to: "++ outputFile
   writeGeomFile outputFile output
-
 
 
 ----------------------------------------------------------------------------------------------------
