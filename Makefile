@@ -3,7 +3,7 @@
 
 # Build the run_benchmark executable in this directory:
 run_array_dsl_benchmarks.exe: run_benchmark.hs run_benchmark.cabal
-	cabal install -ffusion --bindir=`pwd`  --program-suffix=".exe" -j
+	cabal install -ffusion --bindir=`pwd`  --program-suffix=".exe" -j . ./HSBencher/
 
 clean:
 	rm -f run_array_dsl_benchmarks.exe

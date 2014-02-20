@@ -2,3 +2,6 @@
 	path = pbbs
 #	url = https://github.com/iu-parfunc/pbbs.git
 	url = git@github.com:iu-parfunc/pbbs.git
+[submodule "HSBencher"]
+	path = HSBencher
+	url = git@github.com:rrnewton/HSBencher.git
