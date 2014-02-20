@@ -134,7 +134,7 @@ main = do
   performGC
   putStrLn$ "Input in CPU memory, starting benchmark..."
   output <- evaluate $ Bkend.run $ calcAccels input
-  (times,output) <- runTimed Bkend.defaultBackend Nothing (calcAccels input)                    
+  (times,output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (calcAccels input)
   let AccTiming{compileTime,runTime,copyTime} = times
   putStrLn$ "  Result prefix(4): "++ show(P.take 3$ A.toList output)
   putStrLn$ "  Result shape "++ show(A.arrayShape output)
