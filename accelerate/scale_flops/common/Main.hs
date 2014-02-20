@@ -25,10 +25,16 @@ import qualified Data.Vector.Unboxed as U
 
 -- | Stack up N sqrts in a row.
 sqrts :: Int -> Acc (Vector Float) -> Acc (Vector Float)
-sqrts n = A.map (nscalarSqrts n)
+sqrts n = 
+   A.map (nscalarSqrts n)
+   -- A.map (scalePows n)
   where
    nscalarSqrts 0 exp = exp
-   nscalarSqrts n exp = P.sqrt (nscalarSqrts (n-1) exp)
+   nscalarSqrts n exp = P.sqrt (3.33 * (nscalarSqrts (n-1) exp))
+   
+   scalePows n x = let n' = A.fromIntegral $ A.constant n in 
+                   (1.001 ** n') * (0.999 ** n') * x 
+     
 
 main = do
   args <- getArgs
@@ -39,7 +45,7 @@ main = do
   putStrLn$ "[*] Running flops/byte scaling test, array size "++show size++", num sqrts "++show num
   tBegin <- getCurrentTime
   genio  <- createSystemRandom
-  vec    <- randomVectorR (-1E6, 1E6) genio size
+  vec    <- randomVectorR (10.0, 100.0) genio size
   array  <- convertVector (vec :: U.Vector Float)
   evaluate array
   performGC
@@ -56,6 +62,4 @@ main = do
   putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
   putStrLn$ "JITTIME: "++ show compileTime
   putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
-
-
 
