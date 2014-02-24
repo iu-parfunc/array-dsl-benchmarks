@@ -1,14 +1,14 @@
-Name:                nbody-fission1
+Name:                nbody-spmd1
 Version:             0.0.0.1
-Synopsis:            NBody benchmark running with sequential C backend, fissioned.
+Synopsis:            NBody benchmark running with an SPMD backend.
 Build-type:          Custom
 Cabal-version:       >=1.10
 
-Executable bench-nbody-fission1
+Executable bench-nbody-spmd1
     Default-Language:    Haskell2010
     main-is:    Main.hs
     ghc-options: -O2 -threaded -rtsopts 
-    cpp-options: -DACCBACKEND=Data.Array.Accelerate.FissionExampleBackend
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.SPMD_2wayC
     build-depends: base >= 4.6
                  , bytestring >= 0.10, time, array >= 0.4
                  , bytestring-lexing >= 0.4
