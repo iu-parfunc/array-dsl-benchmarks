@@ -69,23 +69,27 @@ main = do
 
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
-  allthree nbody ++
-  concat [ allthree (scaleFlops args) 
-         | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..10]]
-         ]
+  allthree nbody 
+--  ++ allScaleFlops
  where 
-  -- sz = "500000"
-  sz = "2000000"
+
+  -- Vary the size of the big arithmetic expression generated:
+  allScaleFlops = let sz = "2000000" in 
+                  concat [ allthree (scaleFlops args) 
+                         | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..10]]
+                         ]  
 
   -- Run with all of the backends:
   allthree fn = 
     let root = target (fn "seqC") in 
     [ (fn "seqC") { target= root++"/seq_c/" }
-    , (fn "cilk") { target= root++"/cilk/"  }
     , (fn "cuda") { target= root++"/cuda/"  }
+    , varyCilkThreads threadSelection $ (fn "cilk") { target= root++"/cilk/"  }
+    , varyFission threadSelection $ (fn "fission1") { target= root++"/fission1/" }
+    , varyFission threadSelection $ (fn "spmd2")    { target= root++"/spmd2/" }
     ]
 
-  baseline = Benchmark { cmdargs=[], configs= And[], benchTimeOut=Just 50, target="", progname=Nothing }
+  baseline = Benchmark { cmdargs=[], configs= And[], benchTimeOut=Just defaultTimeout, target="", progname=Nothing }
   nbody var = baseline { cmdargs=["10000"], 
                          configs= And[ Set (Variant var)
                                         (RuntimeEnv "ACCELERATE_INPUT_FILE"
@@ -97,6 +101,11 @@ bls_desktop =
                  configs= And[ Set (Variant var) (CompileParam "")],
                  target= "./accelerate/scale_flops", -- Just the root
                  progname= Just "accelerate-scaleFlops" }
+
+
+-- Use 50 seconds as the default timeout:
+defaultTimeout :: Double
+defaultTimeout = 50
 
 --------------------------------------------------------------------------------
 
@@ -110,16 +119,20 @@ bls_desktop =
 --------------------------------------------------------------------------------
 
 -- -- TODO: make this a command-line option:
--- threadSelection :: [Int]
--- threadSelection = unsafePerformIO $ do
---   env <- getEnvironment
---   p   <- getNumProcessors
---   case lookup "THREADS" env of
---     Just ls -> return$ map read $ words ls
---     -- Arbitrary default policy 
---     Nothing
---       | p <= 16   -> return  [1 .. p]
---       | otherwise -> return$ 1 : [2,4 .. p]
+threadSelection :: [Int]
+threadSelection = unsafePerformIO $ do
+  env <- getEnvironment
+  p   <- getNumProcessors
+  case lookup "THREADS" env of
+    Just ls -> return$ map read $ words ls
+    -- Arbitrary default policy 
+    Nothing
+      | p <= 16   -> return  [1 .. p]
+      | otherwise -> return$ 1 : [2,4 .. p]
+
+varyCilkThreads settings bench = bench
+
+varyFission settings bench = bench
 
 -- -- | Add variation from thread count.    
 -- varyThreads :: BenchSpace DefaultParamMeaning -> BenchSpace DefaultParamMeaning
