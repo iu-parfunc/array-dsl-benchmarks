@@ -1,3 +1,4 @@
+{-# LANGUAGE NamedFieldPuns #-}
 
 {- | The benchmarking script:
 
@@ -130,20 +131,15 @@ threadSelection = unsafePerformIO $ do
       | p <= 16   -> return  [1 .. p]
       | otherwise -> return$ 1 : [2,4 .. p]
 
-varyCilkThreads settings bench = bench
+varyCilkThreads :: [Int] -> Benchmark DefaultParamMeaning -> Benchmark DefaultParamMeaning
+varyCilkThreads settings bench@Benchmark{configs} = 
+  bench { configs= And [configs, 
+                       Or [ Set (Threads n) (RuntimeEnv "CILK_NWORKERS" (show n))
+                          | n <- settings ]] }
 
-varyFission settings bench = bench
+varyFission :: [Int] -> Benchmark DefaultParamMeaning -> Benchmark DefaultParamMeaning
+varyFission settings bench@Benchmark{configs} = 
+  bench { configs= And [configs, 
+                       Or [ Set (Threads n) (RuntimeEnv "ACC_FISSION_FACTOR" (show n))
+                          | n <- settings ]] }
 
--- -- | Add variation from thread count.    
--- varyThreads :: BenchSpace DefaultParamMeaning -> BenchSpace DefaultParamMeaning
--- varyThreads conf = Or
---   [
---     -- Disabling unthreaded mode:
---     -- conf -- Unthreaded mode.
---     And [
---           -- Set NoMeaning (CompileParam "--ghc-options='-threaded'")
---           Or (map fn threadSelection)
---         , conf ]
---   ]
---  where
---    fn n = Set (Threads n) $ RuntimeParam  ("+RTS -N"++ show n++" -RTS")
