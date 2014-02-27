@@ -70,10 +70,12 @@ main = do
 
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
-  allthree nbody 
+  allNBodies 
 --  ++ allScaleFlops
  where 
-
+  allNBodies = concat [ allthree (nbody (show arg)) 
+                      | arg <- [10000, 15000, 25000] ]
+                
   -- Vary the size of the big arithmetic expression generated:
   allScaleFlops = let sz = "2000000" in 
                   concat [ allthree (scaleFlops args) 
@@ -91,7 +93,8 @@ bls_desktop =
     ]
 
   baseline = Benchmark { cmdargs=[], configs= And[], benchTimeOut=Just defaultTimeout, target="", progname=Nothing }
-  nbody var = baseline { cmdargs=["10000"], 
+  nbody size var = 
+              baseline { cmdargs=[size], 
                          configs= And[ Set (Variant var)
                                         (RuntimeEnv "ACCELERATE_INPUT_FILE"
                                          "./accelerate/nbody/makefile_based/uniform.3dpts")],
