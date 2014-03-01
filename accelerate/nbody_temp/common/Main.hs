@@ -101,16 +101,16 @@ main = do
   args <- getArgs
   (n) <- case args of
          []  -> do putStrLn "Using default size for input."
-                   return (Just 100)
+                   return (100)
          [n] -> do putStrLn$ "NBODY size on command line: N="++ show n
-                   return (Just $ read n)
+                   return (read n)
   env <- getEnvironment
   let file = case L.lookup "ACCELERATE_INPUT_FILE" env of
               Nothing -> defaultInputFile
               Just s -> s
   putStrLn$ "NBODY: Reading requested prefix of input file... "++show n
   tBegin <- getCurrentTime
-  raw    <- readGeomFile n file
+  raw    <- readGeomFile (Just n) file
   tEnd   <- getCurrentTime
   putStrLn$ "Done reading (took "++show (diffUTCTime tEnd tBegin)++"), converting to Acc array.."
   tBegin <- getCurrentTime
@@ -125,8 +125,10 @@ main = do
   putStrLn$ "Input in CPU memory and did GC (took "++show (diffUTCTime tEnd tBegin)++"), starting benchmark..."
   ----------------------------------------
 
-  let prog1 = calcAccels1 input
-      prog2 = calcAccels2 input
+  let half  = A.constant (n `quot` 2)
+      prog1 = calcAccels1 half input
+--      prog2 = calcAccels2 half input
+      prog2 = calcAccels1 half input
 
   let x :: (Acc Ty, BC.SomeBackend, Phase)
       x = ( prog1, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
@@ -163,10 +165,10 @@ calcAccels bodies
     A.fold plusV (constant (0,0,0)) $ A.zipWith (accel) rows cols
 
 
-calcAccels1 :: A.Acc (A.Vector Position) -> A.Acc (A.Vector Accel)
-calcAccels1 bodies
+calcAccels1 :: Exp Int -> A.Acc (A.Vector Position) -> A.Acc (A.Vector Accel)
+calcAccels1 half bodies
   = let n       = A.size bodies
-        half    = n `quot` 2
+--        half    = n `quot` 2
         front   = A.take half bodies
 
         -- Replicate the little one all the way:
@@ -178,10 +180,11 @@ calcAccels1 bodies
     A.fold plusV (constant (0,0,0)) $ A.zipWith (accel) rows cols
 
 
-calcAccels2 :: A.Acc (A.Vector Position) -> A.Acc (A.Vector Accel)
-calcAccels2 bodies
+-- calcAccels2 :: Exp Int -> A.Acc (A.Vector Position) -> A.Acc (A.Vector Position) -> A.Acc (A.Vector Accel)
+calcAccels2 :: Exp Int -> A.Acc (A.Vector Position) -> A.Acc (A.Vector Accel)
+calcAccels2 half bodies
   = let n       = A.size bodies
-        half    = n `quot` 2
+--        half    = n `quot` 2
         back    = A.drop half bodies
 
         -- Replicate the little one all the way:
