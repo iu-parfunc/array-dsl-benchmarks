@@ -125,17 +125,20 @@ main = do
   putStrLn$ "Input in CPU memory and did GC (took "++show (diffUTCTime tEnd tBegin)++"), starting benchmark..."
   ----------------------------------------
 
-  let prog = calcAccels input
+  let prog1 = calcAccels1 input
+      prog2 = calcAccels2 input
 
   let x :: (Acc Ty, BC.SomeBackend, Phase)
-      x = ( prog, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
+      x = ( prog1, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
 
   let y :: (Acc Ty, BC.SomeBackend, Phase)
-      y = ( prog, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig)
+      y = ( prog2, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig)
 
   -- Temp, test individually first:
 --  runMultiple [ x ]
 --  runMultiple [ y ]
+
+--  print (I.run prog)
 
   runMultiple [ x, y ]
   putStrLn "All done with runMultiple!"
@@ -158,6 +161,38 @@ calcAccels bodies
 
     in
     A.fold plusV (constant (0,0,0)) $ A.zipWith (accel) rows cols
+
+
+calcAccels1 :: A.Acc (A.Vector Position) -> A.Acc (A.Vector Accel)
+calcAccels1 bodies
+  = let n       = A.size bodies
+        half    = n `quot` 2
+        front   = A.take half bodies
+
+        -- Replicate the little one all the way:
+        cols    = A.replicate (lift $ Z :. All :. n)    front
+        -- And the big one half way:
+        rows    = A.replicate (lift $ Z :. half :. All) bodies
+
+    in
+    A.fold plusV (constant (0,0,0)) $ A.zipWith (accel) rows cols
+
+
+calcAccels2 :: A.Acc (A.Vector Position) -> A.Acc (A.Vector Accel)
+calcAccels2 bodies
+  = let n       = A.size bodies
+        half    = n `quot` 2
+        back    = A.drop half bodies
+
+        -- Replicate the little one all the way:
+        cols    = A.replicate (lift $ Z :. All :. n)    back
+        -- And the big one half way:
+        rows    = A.replicate (lift $ Z :. half :. All) bodies
+    in
+    A.fold plusV (constant (0,0,0)) $ A.zipWith (accel) rows cols
+
+
+
 
 
 -- Acceleration ----------------------------------------------------------------
