@@ -144,25 +144,6 @@ main = do
 -- type Ty = (Scalar Int)
 type Ty = (A.Vector Accel)
 
-{-
-main :: IO ()
-main = do
-    
--- Temporary: for debugging we aren't using a file at all:
-
-  tBegin <- getCurrentTime
-  (times,output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (calcAccels input)
-  tEnd   <- getCurrentTime
-  let AccTiming{compileTime,runTime,copyTime} = times
-  putStrLn$ "  Result prefix(4): "++ show(P.take 3$ A.toList output)
-  putStrLn$ "  Result shape "++ show(A.arrayShape output)
-  putStrLn$ "  All timing: "++ show times
-  putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
-  putStrLn$ "JITTIME: "++ show compileTime
-  putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
-  putStrLn$ "Writing output file to: "++ outputFile
-  writeGeomFile outputFile output
--}
 
 ----------------------------------------------------------------------------------------------------
 -- The actual benchmark code:
@@ -207,5 +188,486 @@ accel body1 body2
     r           = sqrt rsqr
 
 
+{-
+
+Prog {progBinds = [ProgBind aLt2
+                            (TArray 1 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10], Orig)
+                            (Right Use AccArray [10] [0.204377359711,-0.124071846716,9.23475595191e-2,0.855260848999,-0.355440662242,-0.699805021286,-0.225843770429,4.79635689408e-2,-0.108046301641,0.881816339679] [0.58752346877,-0.430925352499,0.471875966527,0.17408952117,0.29258855246,-0.290639472194,-0.214849968441,0.789017047733,-0.568562230095,-0.122657088563] [0.466465813108,0.818155869842,-0.390485706739,-5.50553835928e-2,5.77864721417e-2,-0.194938545115,-0.948073166423,0.361016079783,-0.264976296574,-0.182035161182]),
+                   ProgBind aLt2_0
+                            (TArray 1 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [5], Fissioned 0 2 aLt2)
+                            (Right Use AccArray [5] [0.204377359711,-0.124071846716,9.23475595191e-2,0.855260848999,-0.355440662242] [0.58752346877,-0.430925352499,0.471875966527,0.17408952117,0.29258855246] [0.466465813108,0.818155869842,-0.390485706739,-5.50553835928e-2,5.77864721417e-2]),
+                   ProgBind aLt2_1
+                            (TArray 1 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [5], Fissioned 1 2 aLt2)
+                            (Right Use AccArray [5] [-0.699805021286,-0.225843770429,4.79635689408e-2,-0.108046301641,0.881816339679] [-0.290639472194,-0.214849968441,0.789017047733,-0.568562230095,-0.122657088563] [-0.194938545115,-0.948073166423,0.361016079783,-0.264976296574,-0.182035161182]),
+                   ProgBind tmp_2_3
+                            (TArray 2 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10,5], Fissioned 0 2 tmp_2)
+                            (Right Replicate [Fixed,All]
+                                             (ETuple [EConst (I 10),EConst (Tup [])])
+                                             aLt2_0),
+                   ProgBind tmp_2_4
+                            (TArray 2 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10,5], Fissioned 1 2 tmp_2)
+                            (Right Replicate [Fixed,All]
+                                             (ETuple [EConst (I 10),EConst (Tup [])])
+                                             aLt2_1),
+                   ProgBind tmp_2
+                            (TArray 2 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10,10], Concatted [tmp_2_3,tmp_2_4])
+                            (Right Generate (ETuple [EConst (I 10),EConst (I 10)])
+                                            (Lam1 (ix5, TTuple [TInt,TInt])
+                                                  (ECond (EPrimApp TBool
+                                                                   (SP Lt)
+                                                                   [ETupProject {indexFromRight = 0,
+                                                                                 projlen = 1,
+                                                                                 tupexpr = EVr ix5},
+                                                                    EConst (I 5)])
+                                                         (EIndexScalar tmp_2_3
+                                                                       (ETuple [ETupProject {indexFromRight = 1,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr ix5},
+                                                                                ETupProject {indexFromRight = 0,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr ix5}]))
+                                                         (EIndexScalar tmp_2_4
+                                                                       (ETuple [ETupProject {indexFromRight = 1,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr ix5},
+                                                                                EPrimApp TInt
+                                                                                         (NP Sub)
+                                                                                         [ETupProject {indexFromRight = 0,
+                                                                                                       projlen = 1,
+                                                                                                       tupexpr = EVr ix5},
+                                                                                          EConst (I 5)]]))))),
+                   ProgBind tmp_3_6
+                            (TArray 2 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10,5], Fissioned 0 2 tmp_3)
+                            (Right Replicate [All,Fixed]
+                                             (ETuple [EConst (Tup []),EConst (I 10)])
+                                             aLt2_0),
+                   ProgBind tmp_3_7
+                            (TArray 2 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10,5], Fissioned 1 2 tmp_3)
+                            (Right Replicate [All,Fixed]
+                                             (ETuple [EConst (Tup []),EConst (I 10)])
+                                             aLt2_1),
+                   ProgBind tmp_3
+                            (TArray 2 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10,10], Concatted [tmp_3_6,tmp_3_7])
+                            (Right Generate (ETuple [EConst (I 10),EConst (I 10)])
+                                            (Lam1 (ix8, TTuple [TInt,TInt])
+                                                  (ECond (EPrimApp TBool
+                                                                   (SP Lt)
+                                                                   [ETupProject {indexFromRight = 0,
+                                                                                 projlen = 1,
+                                                                                 tupexpr = EVr ix8},
+                                                                    EConst (I 5)])
+                                                         (EIndexScalar tmp_3_6
+                                                                       (ETuple [ETupProject {indexFromRight = 1,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr ix8},
+                                                                                ETupProject {indexFromRight = 0,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr ix8}]))
+                                                         (EIndexScalar tmp_3_7
+                                                                       (ETuple [ETupProject {indexFromRight = 1,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr ix8},
+                                                                                EPrimApp TInt
+                                                                                         (NP Sub)
+                                                                                         [ETupProject {indexFromRight = 0,
+                                                                                                       projlen = 1,
+                                                                                                       tupexpr = EVr ix8},
+                                                                                          EConst (I 5)]]))))),
+                   ProgBind tmp_1_9
+                            (TArray 2 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10,5], Fissioned 0 2 tmp_1)
+                            (Right ZipWith (Lam2 (v3, TTuple [TDouble,TDouble,TDouble])
+                                                 (v4, TTuple [TDouble,TDouble,TDouble])
+                                                 (ELet (e5,
+                                                        TDouble,
+                                                        ETupProject {indexFromRight = 1,
+                                                                     projlen = 1,
+                                                                     tupexpr = EVr v4})
+                                                       (ELet (e6,
+                                                              TDouble,
+                                                              ETupProject {indexFromRight = 1,
+                                                                           projlen = 1,
+                                                                           tupexpr = EVr v3})
+                                                             (ELet (e7,
+                                                                    TDouble,
+                                                                    ETupProject {indexFromRight = 0,
+                                                                                 projlen = 1,
+                                                                                 tupexpr = EVr v4})
+                                                                   (ELet (e8,
+                                                                          TDouble,
+                                                                          ETupProject {indexFromRight = 0,
+                                                                                       projlen = 1,
+                                                                                       tupexpr = EVr v3})
+                                                                         (ELet (e9,
+                                                                                TDouble,
+                                                                                ETupProject {indexFromRight = 2,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr v3})
+                                                                               (ELet (e10,
+                                                                                      TDouble,
+                                                                                      ETupProject {indexFromRight = 2,
+                                                                                                   projlen = 1,
+                                                                                                   tupexpr = EVr v4})
+                                                                                     (ECond (EPrimApp TBool
+                                                                                                      (BP Not)
+                                                                                                      [EPrimApp TBool
+                                                                                                                (BP And)
+                                                                                                                [EPrimApp TBool
+                                                                                                                          (SP Eq)
+                                                                                                                          [EVr e9,
+                                                                                                                           EVr e10],
+                                                                                                                 EPrimApp TBool
+                                                                                                                          (BP And)
+                                                                                                                          [EPrimApp TBool
+                                                                                                                                    (SP Eq)
+                                                                                                                                    [EVr e6,
+                                                                                                                                     EVr e5],
+                                                                                                                           EPrimApp TBool
+                                                                                                                                    (SP Eq)
+                                                                                                                                    [EVr e8,
+                                                                                                                                     EVr e7]]]])
+                                                                                            (ELet (e11,
+                                                                                                   TDouble,
+                                                                                                   EPrimApp TDouble
+                                                                                                            (NP Sub)
+                                                                                                            [EVr e7,
+                                                                                                             EVr e8])
+                                                                                                  (ELet (e12,
+                                                                                                         TDouble,
+                                                                                                         EPrimApp TDouble
+                                                                                                                  (NP Sub)
+                                                                                                                  [EVr e10,
+                                                                                                                   EVr e9])
+                                                                                                        (ELet (e13,
+                                                                                                               TDouble,
+                                                                                                               EPrimApp TDouble
+                                                                                                                        (NP Sub)
+                                                                                                                        [EVr e5,
+                                                                                                                         EVr e6])
+                                                                                                              (ELet (e14,
+                                                                                                                     TDouble,
+                                                                                                                     EPrimApp TDouble
+                                                                                                                              (NP Add)
+                                                                                                                              [EPrimApp TDouble
+                                                                                                                                        (NP Add)
+                                                                                                                                        [EPrimApp TDouble
+                                                                                                                                                  (NP Mul)
+                                                                                                                                                  [EVr e12,
+                                                                                                                                                   EVr e12],
+                                                                                                                                         EPrimApp TDouble
+                                                                                                                                                  (NP Mul)
+                                                                                                                                                  [EVr e13,
+                                                                                                                                                   EVr e13]],
+                                                                                                                               EPrimApp TDouble
+                                                                                                                                        (NP Mul)
+                                                                                                                                        [EVr e11,
+                                                                                                                                         EVr e11]])
+                                                                                                                    (ELet (e15,
+                                                                                                                           TDouble,
+                                                                                                                           EPrimApp TDouble
+                                                                                                                                    (FP Sqrt)
+                                                                                                                                    [EVr e14])
+                                                                                                                          (ELet (e16,
+                                                                                                                                 TDouble,
+                                                                                                                                 EPrimApp TDouble
+                                                                                                                                          (FP FDiv)
+                                                                                                                                          [EPrimApp TDouble
+                                                                                                                                                    (NP Mul)
+                                                                                                                                                    [EConst (D 1.0),
+                                                                                                                                                     EConst (D 1.0)],
+                                                                                                                                           EVr e14])
+                                                                                                                                (ETuple [EPrimApp TDouble
+                                                                                                                                                  (FP FDiv)
+                                                                                                                                                  [EPrimApp TDouble
+                                                                                                                                                            (NP Mul)
+                                                                                                                                                            [EVr e16,
+                                                                                                                                                             EVr e12],
+                                                                                                                                                   EVr e15],
+                                                                                                                                         EPrimApp TDouble
+                                                                                                                                                  (FP FDiv)
+                                                                                                                                                  [EPrimApp TDouble
+                                                                                                                                                            (NP Mul)
+                                                                                                                                                            [EVr e16,
+                                                                                                                                                             EVr e13],
+                                                                                                                                                   EVr e15],
+                                                                                                                                         EPrimApp TDouble
+                                                                                                                                                  (FP FDiv)
+                                                                                                                                                  [EPrimApp TDouble
+                                                                                                                                                            (NP Mul)
+                                                                                                                                                            [EVr e16,
+                                                                                                                                                             EVr e11],
+                                                                                                                                                   EVr e15]])))))))
+                                                                                            (ETuple [EConst (D 0.0),
+                                                                                                     EConst (D 0.0),
+                                                                                                     EConst (D 0.0)])))))))))
+                                           tmp_2_3
+                                           tmp_3_6),
+                   ProgBind tmp_1_10
+                            (TArray 2 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10,5], Fissioned 1 2 tmp_1)
+                            (Right ZipWith (Lam2 (v3, TTuple [TDouble,TDouble,TDouble])
+                                                 (v4, TTuple [TDouble,TDouble,TDouble])
+                                                 (ELet (e5,
+                                                        TDouble,
+                                                        ETupProject {indexFromRight = 1,
+                                                                     projlen = 1,
+                                                                     tupexpr = EVr v4})
+                                                       (ELet (e6,
+                                                              TDouble,
+                                                              ETupProject {indexFromRight = 1,
+                                                                           projlen = 1,
+                                                                           tupexpr = EVr v3})
+                                                             (ELet (e7,
+                                                                    TDouble,
+                                                                    ETupProject {indexFromRight = 0,
+                                                                                 projlen = 1,
+                                                                                 tupexpr = EVr v4})
+                                                                   (ELet (e8,
+                                                                          TDouble,
+                                                                          ETupProject {indexFromRight = 0,
+                                                                                       projlen = 1,
+                                                                                       tupexpr = EVr v3})
+                                                                         (ELet (e9,
+                                                                                TDouble,
+                                                                                ETupProject {indexFromRight = 2,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr v3})
+                                                                               (ELet (e10,
+                                                                                      TDouble,
+                                                                                      ETupProject {indexFromRight = 2,
+                                                                                                   projlen = 1,
+                                                                                                   tupexpr = EVr v4})
+                                                                                     (ECond (EPrimApp TBool
+                                                                                                      (BP Not)
+                                                                                                      [EPrimApp TBool
+                                                                                                                (BP And)
+                                                                                                                [EPrimApp TBool
+                                                                                                                          (SP Eq)
+                                                                                                                          [EVr e9,
+                                                                                                                           EVr e10],
+                                                                                                                 EPrimApp TBool
+                                                                                                                          (BP And)
+                                                                                                                          [EPrimApp TBool
+                                                                                                                                    (SP Eq)
+                                                                                                                                    [EVr e6,
+                                                                                                                                     EVr e5],
+                                                                                                                           EPrimApp TBool
+                                                                                                                                    (SP Eq)
+                                                                                                                                    [EVr e8,
+                                                                                                                                     EVr e7]]]])
+                                                                                            (ELet (e11,
+                                                                                                   TDouble,
+                                                                                                   EPrimApp TDouble
+                                                                                                            (NP Sub)
+                                                                                                            [EVr e7,
+                                                                                                             EVr e8])
+                                                                                                  (ELet (e12,
+                                                                                                         TDouble,
+                                                                                                         EPrimApp TDouble
+                                                                                                                  (NP Sub)
+                                                                                                                  [EVr e10,
+                                                                                                                   EVr e9])
+                                                                                                        (ELet (e13,
+                                                                                                               TDouble,
+                                                                                                               EPrimApp TDouble
+                                                                                                                        (NP Sub)
+                                                                                                                        [EVr e5,
+                                                                                                                         EVr e6])
+                                                                                                              (ELet (e14,
+                                                                                                                     TDouble,
+                                                                                                                     EPrimApp TDouble
+                                                                                                                              (NP Add)
+                                                                                                                              [EPrimApp TDouble
+                                                                                                                                        (NP Add)
+                                                                                                                                        [EPrimApp TDouble
+                                                                                                                                                  (NP Mul)
+                                                                                                                                                  [EVr e12,
+                                                                                                                                                   EVr e12],
+                                                                                                                                         EPrimApp TDouble
+                                                                                                                                                  (NP Mul)
+                                                                                                                                                  [EVr e13,
+                                                                                                                                                   EVr e13]],
+                                                                                                                               EPrimApp TDouble
+                                                                                                                                        (NP Mul)
+                                                                                                                                        [EVr e11,
+                                                                                                                                         EVr e11]])
+                                                                                                                    (ELet (e15,
+                                                                                                                           TDouble,
+                                                                                                                           EPrimApp TDouble
+                                                                                                                                    (FP Sqrt)
+                                                                                                                                    [EVr e14])
+                                                                                                                          (ELet (e16,
+                                                                                                                                 TDouble,
+                                                                                                                                 EPrimApp TDouble
+                                                                                                                                          (FP FDiv)
+                                                                                                                                          [EPrimApp TDouble
+                                                                                                                                                    (NP Mul)
+                                                                                                                                                    [EConst (D 1.0),
+                                                                                                                                                     EConst (D 1.0)],
+                                                                                                                                           EVr e14])
+                                                                                                                                (ETuple [EPrimApp TDouble
+                                                                                                                                                  (FP FDiv)
+                                                                                                                                                  [EPrimApp TDouble
+                                                                                                                                                            (NP Mul)
+                                                                                                                                                            [EVr e16,
+                                                                                                                                                             EVr e12],
+                                                                                                                                                   EVr e15],
+                                                                                                                                         EPrimApp TDouble
+                                                                                                                                                  (FP FDiv)
+                                                                                                                                                  [EPrimApp TDouble
+                                                                                                                                                            (NP Mul)
+                                                                                                                                                            [EVr e16,
+                                                                                                                                                             EVr e13],
+                                                                                                                                                   EVr e15],
+                                                                                                                                         EPrimApp TDouble
+                                                                                                                                                  (FP FDiv)
+                                                                                                                                                  [EPrimApp TDouble
+                                                                                                                                                            (NP Mul)
+                                                                                                                                                            [EVr e16,
+                                                                                                                                                             EVr e11],
+                                                                                                                                                   EVr e15]])))))))
+                                                                                            (ETuple [EConst (D 0.0),
+                                                                                                     EConst (D 0.0),
+                                                                                                     EConst (D 0.0)])))))))))
+                                           tmp_2_4
+                                           tmp_3_7),
+                   ProgBind tmp_1
+                            (TArray 2 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10,10], Concatted [tmp_1_9,tmp_1_10])
+                            (Right Generate (ETuple [EConst (I 10),EConst (I 10)])
+                                            (Lam1 (ix11, TTuple [TInt,TInt])
+                                                  (ECond (EPrimApp TBool
+                                                                   (SP Lt)
+                                                                   [ETupProject {indexFromRight = 0,
+                                                                                 projlen = 1,
+                                                                                 tupexpr = EVr ix11},
+                                                                    EConst (I 5)])
+                                                         (EIndexScalar tmp_1_9
+                                                                       (ETuple [ETupProject {indexFromRight = 1,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr ix11},
+                                                                                ETupProject {indexFromRight = 0,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr ix11}]))
+                                                         (EIndexScalar tmp_1_10
+                                                                       (ETuple [ETupProject {indexFromRight = 1,
+                                                                                             projlen = 1,
+                                                                                             tupexpr = EVr ix11},
+                                                                                EPrimApp TInt
+                                                                                         (NP Sub)
+                                                                                         [ETupProject {indexFromRight = 0,
+                                                                                                       projlen = 1,
+                                                                                                       tupexpr = EVr ix11},
+                                                                                          EConst (I 5)]]))))),
+                   ProgBind tmp_0_12
+                            (TArray 1 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [5], Fissioned 0 2 tmp_0)
+                            (Right Fold (Lam2 (v0, TTuple [TDouble,TDouble,TDouble])
+                                              (v1, TTuple [TDouble,TDouble,TDouble])
+                                              (ETuple [EPrimApp TDouble
+                                                                (NP Add)
+                                                                [ETupProject {indexFromRight = 2,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v0},
+                                                                 ETupProject {indexFromRight = 2,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v1}],
+                                                       EPrimApp TDouble
+                                                                (NP Add)
+                                                                [ETupProject {indexFromRight = 1,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v0},
+                                                                 ETupProject {indexFromRight = 1,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v1}],
+                                                       EPrimApp TDouble
+                                                                (NP Add)
+                                                                [ETupProject {indexFromRight = 0,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v0},
+                                                                 ETupProject {indexFromRight = 0,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v1}]]))
+                                        (EConst (Tup [D 0.0,D 0.0,D 0.0]))
+                                        tmp_1_9),
+                   ProgBind tmp_0_13
+                            (TArray 1 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [5], Fissioned 1 2 tmp_0)
+                            (Right Fold (Lam2 (v0, TTuple [TDouble,TDouble,TDouble])
+                                              (v1, TTuple [TDouble,TDouble,TDouble])
+                                              (ETuple [EPrimApp TDouble
+                                                                (NP Add)
+                                                                [ETupProject {indexFromRight = 2,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v0},
+                                                                 ETupProject {indexFromRight = 2,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v1}],
+                                                       EPrimApp TDouble
+                                                                (NP Add)
+                                                                [ETupProject {indexFromRight = 1,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v0},
+                                                                 ETupProject {indexFromRight = 1,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v1}],
+                                                       EPrimApp TDouble
+                                                                (NP Add)
+                                                                [ETupProject {indexFromRight = 0,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v0},
+                                                                 ETupProject {indexFromRight = 0,
+                                                                              projlen = 1,
+                                                                              tupexpr = EVr v1}]]))
+                                        (EConst (Tup [D 0.0,D 0.0,D 0.0]))
+                                        tmp_1_10),
+                   ProgBind tmp_0
+                            (TArray 1 (TTuple [TDouble,TDouble,TDouble]))
+                            (KnownSize [10], Concatted [tmp_0_12,tmp_0_13])
+                            (Right Generate (EConst (I 10))
+                                            (Lam1 (ix14, TInt)
+                                                  (ECond (EPrimApp TBool
+                                                                   (SP Lt)
+                                                                   [EVr ix14,EConst (I 5)])
+                                                         (EIndexScalar tmp_0_12 (EVr ix14))
+                                                         (EIndexScalar tmp_0_13
+                                                                       (EPrimApp TInt
+                                                                                 (NP Sub)
+                                                                                 [EVr ix14,
+                                                                                  EConst (I 5)]))))),
+                   ProgBind tmp_0_shape
+                            TInt
+                            (UnknownSize, Orig)
+                            (Left EConst (I 10))],
+      progResults = WithShapes [(tmp_0, tmp_0_shape)],
+      progType = TArray 1 (TTuple [TDouble,TDouble,TDouble]),
+      uniqueCounter = 15,
+      typeEnv = [(aLt2, TArray 1 (TTuple [TDouble,TDouble,TDouble])),
+                 (aLt2_0, TArray 1 (TTuple [TDouble,TDouble,TDouble])),
+                 (aLt2_1, TArray 1 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_0, TArray 1 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_0_12, TArray 1 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_0_13, TArray 1 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_0_shape, TInt),
+                 (tmp_1, TArray 2 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_1_10, TArray 2 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_1_9, TArray 2 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_2, TArray 2 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_2_3, TArray 2 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_2_4, TArray 2 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_3, TArray 2 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_3_6, TArray 2 (TTuple [TDouble,TDouble,TDouble])),
+                 (tmp_3_7, TArray 2 (TTuple [TDouble,TDouble,TDouble]))]}
+
+-}
 
 
