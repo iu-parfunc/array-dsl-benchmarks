@@ -114,24 +114,35 @@ main = do
   tEnd   <- getCurrentTime
   putStrLn$ "Done reading (took "++show (diffUTCTime tEnd tBegin)++"), converting to Acc array.."
   tBegin <- getCurrentTime
-  -- let input :: A.Acc (A.Vector Position)
-  --     input  = A.use input0
-  --     input0 = A.fromIArray $ raw 
-  -- putStrLn$ "  Input prefix(4) "++ show(P.take 3$ U.elems raw)
-  -- evaluate input0
-  -- performGC
-  -- tEnd   <- getCurrentTime
+
+  let input :: A.Acc (A.Vector Position)
+      input  = A.use input0
+      input0 = A.fromIArray $ raw 
+  putStrLn$ "  Input prefix(4) "++ show(P.take 3$ U.elems raw)
+  evaluate input0
+  performGC
+  tEnd   <- getCurrentTime
+  putStrLn$ "Input in CPU memory and did GC (took "++show (diffUTCTime tEnd tBegin)++"), starting benchmark..."
   ----------------------------------------
 
-  let x :: (Acc (Scalar Int), BC.SomeBackend, Phase)
-      x = ( A.unit (A.constant 3), BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
+  let prog = calcAccels input
 
-  let y :: (Acc (Scalar Int), BC.SomeBackend, Phase)
-      y = ( A.unit (A.constant 3), BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig)
+  let x :: (Acc Ty, BC.SomeBackend, Phase)
+      x = ( prog, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
+
+  let y :: (Acc Ty, BC.SomeBackend, Phase)
+      y = ( prog, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig)
+
+  -- Temp, test individually first:
+--  runMultiple [ x ]
+--  runMultiple [ y ]
 
   runMultiple [ x, y ]
   putStrLn "All done with runMultiple!"
   exitSuccess
+
+-- type Ty = (Scalar Int)
+type Ty = (A.Vector Accel)
 
 {-
 main :: IO ()
@@ -139,8 +150,6 @@ main = do
     
 -- Temporary: for debugging we aren't using a file at all:
 
-
-  putStrLn$ "Input in CPU memory and did GC (took "++show (diffUTCTime tEnd tBegin)++"), starting benchmark..."
   tBegin <- getCurrentTime
   (times,output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (calcAccels input)
   tEnd   <- getCurrentTime

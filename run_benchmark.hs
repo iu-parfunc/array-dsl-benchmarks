@@ -71,11 +71,22 @@ main = do
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
   allNBodies 
+  ++ allMultiNBodies
 --  ++ allScaleFlops
   ++ allScaleFlops2
  where 
+  nbody_args = [10000, 15000, 25000]
   allNBodies = concat [ allthree (nbody (show arg)) 
-                      | arg <- [10000, 15000, 25000] ]
+                      | arg <- nbody_args ]
+
+  allMultiNBodies = 
+       [ baseline { cmdargs=[ show arg ], 
+                    configs= And[ Set (Variant "cpugpu")
+                                  (RuntimeEnv "ACCELERATE_INPUT_FILE"
+                                   "./accelerate/nbody/makefile_based/uniform.3dpts")],
+                    target= "./accelerate/nbody_temp/cpugpu/",
+                    progname= Just "accelerate-nbody-cpugpu" }
+       | arg <- nbody_args ]
                 
   -- Vary the size of the big arithmetic expression generated:
   allScaleFlops = let sz = "2000000" in 
