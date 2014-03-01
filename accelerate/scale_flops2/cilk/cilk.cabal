@@ -1,0 +1,20 @@
+Name:                cilk
+Version:             0.0.0.1
+Synopsis:            Benchmark running with Cilk backend.
+Build-type:          Simple
+Cabal-version:       >=1.10
+
+Executable cilk
+    Default-Language:    Haskell2010
+    main-is:    Main.hs
+    hs-source-dirs: ../common/ ../../common
+    ghc-options: -O2 -threaded -rtsopts 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.Cilk
+    build-depends: base >= 4.6
+                 , time, array >= 0.4
+--               , bytestring >= 0.10, bytestring-lexing >= 0.4
+                 , accelerate-backend-kit >= 0.13.0.99
+                 , accelerate-icc-opencl  >= 0.13.0.99
+                 , accelerate             >= 0.13.0.99
+                 , vector  >= 0.10
+                 , mwc-random
