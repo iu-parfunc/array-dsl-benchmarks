@@ -83,7 +83,7 @@ bls_desktop =
        [ baseline { cmdargs=[ show arg ], 
                     configs= And[ Set (Variant "cpugpu")
                                   (RuntimeEnv "ACCELERATE_INPUT_FILE"
-                                   "./accelerate/nbody/makefile_based/uniform.3dpts")],
+                                   "./accelerate/nbody_temp/common/uniform.3dpts")],
                     target= "./accelerate/nbody_temp/cpugpu/",
                     progname= Just "accelerate-nbody-cpugpu" }
        | arg <- nbody_args ]
