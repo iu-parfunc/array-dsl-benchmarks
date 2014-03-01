@@ -34,6 +34,7 @@ import System.Environment
 import System.IO
 import System.Environment (getEnvironment)
 import System.Mem  (performGC)
+import System.Exit 
 import Data.Maybe (fromJust)
 import Debug.Trace 
 
@@ -124,8 +125,13 @@ main = do
 
   let x :: (Acc (Scalar Int), BC.SomeBackend, Phase)
       x = ( A.unit (A.constant 3), BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
-  runMultiple [ x ]
-  putStrLn "Hello world."
+
+  let y :: (Acc (Scalar Int), BC.SomeBackend, Phase)
+      y = ( A.unit (A.constant 3), BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig)
+
+  runMultiple [ x, y ]
+  putStrLn "All done with runMultiple!"
+  exitSuccess
 
 {-
 main :: IO ()
