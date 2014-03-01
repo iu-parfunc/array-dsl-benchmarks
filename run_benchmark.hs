@@ -83,10 +83,10 @@ bls_desktop =
                          | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..10]]
                          ]  
 
-  allScaleFlops2 = let sz = "500000" in 
-                  concat [ allthree (scaleFlops2 args) 
-                         | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..13]]
-                         ]
+  allScaleFlops2 = concat [ allthree (scaleFlops2 args) 
+                          | sz <- ["1000000", "2000000"]
+                          , args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..13]]
+                          ]
 
   -- Run with all of the backends:
   allthree fn = 
