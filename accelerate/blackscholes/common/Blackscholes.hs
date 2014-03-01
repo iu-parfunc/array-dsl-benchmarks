@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE CPP, NamedFieldPuns #-}
 module Main where
 
 import Random
@@ -11,9 +11,11 @@ import Prelude               as P
 #ifdef ACCBACKEND
 import qualified ACCBACKEND as Bkend
 #else
-import qualified Data.Array.Accelerate.CUDA as Bkend
+#error "Must specify ACCBACKEND CPP variable to build this nbody benchmark."
+-- import qualified Data.Array.Accelerate.CUDA as Bkend
 #endif
 
+import           Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..))
 import           Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 import Control.Exception (evaluate)
@@ -104,14 +106,21 @@ main = do args <- getArgs
 
           (_,run_acc) <- run inputSize -- 0000
 
-          let vec = Bkend.run $ run_acc ()
+          tBegin <- getCurrentTime
+          (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (run_acc ())
+          tEnd   <- getCurrentTime
+          let AccTiming{compileTime,runTime,copyTime} = times
+          putStrLn$ "  All timing: "++ show times
+          putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
+          putStrLn$ "JITTIME: "++ show compileTime
+          putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
 
-          t1 <- getCurrentTime
-          evaluate vec
-          t2 <- getCurrentTime
-          let dt = t2 `diffUTCTime` t1
-          putStrLn$ "SELFTIMED-with-compile: "++ show dt
+          -- let vec = Bkend.run $ run_acc ()
 
-
+          -- t1 <- getCurrentTime
+          -- evaluate vec
+          -- t2 <- getCurrentTime
+          -- let dt = t2 `diffUTCTime` t1
+          -- putStrLn$ "SELFTIMED-with-compile: "++ show dt
 --	  putStrLn$ "Final checksum: "++ show sum
   
