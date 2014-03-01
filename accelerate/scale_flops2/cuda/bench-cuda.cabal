@@ -1,4 +1,4 @@
-Name:                cuda
+Name:                bench-cuda
 Version:             0.0.0.1
 Synopsis:            Benchmark running with standard CUDA backend.
 Build-type:          Simple
