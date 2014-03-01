@@ -72,6 +72,7 @@ bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
   allNBodies 
 --  ++ allScaleFlops
+  ++ allScaleFlops2
  where 
   allNBodies = concat [ allthree (nbody (show arg)) 
                       | arg <- [10000, 15000, 25000] ]
@@ -81,6 +82,11 @@ bls_desktop =
                   concat [ allthree (scaleFlops args) 
                          | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..10]]
                          ]  
+
+  allScaleFlops2 = let sz = "500000" in 
+                  concat [ allthree (scaleFlops2 args) 
+                         | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..13]]
+                         ]
 
   -- Run with all of the backends:
   allthree fn = 
@@ -105,6 +111,13 @@ bls_desktop =
                  configs= And[ Set (Variant var) (CompileParam "")],
                  target= "./accelerate/scale_flops", -- Just the root
                  progname= Just "accelerate-scaleFlops" }
+
+  scaleFlops2 args var = 
+      baseline { cmdargs=args, 
+                 configs= And[ Set (Variant var) (CompileParam "")],
+                 target= "./accelerate/scale_flops2", -- Just the root
+                 progname= Just "accelerate-scaleFlops2" }
+
 
 
 -- Use 50 seconds as the default timeout:
