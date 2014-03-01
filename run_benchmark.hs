@@ -74,8 +74,15 @@ bls_desktop =
   ++ allMultiNBodies
 --  ++ allScaleFlops
   ++ allScaleFlops2
+  ++ allBlackscholes
  where 
   nbody_args = [10000, 15000, 25000]
+
+  blackscholes_args = [100000, 1000000, 2000000, 10000000]
+
+  allBlackscholes = concat [ allthree (blackscholes (show arg))
+                           | arg <- blackscholes_args ]
+
   allNBodies = concat [ allthree (nbody (show arg)) 
                       | arg <- nbody_args ]
 
@@ -117,6 +124,14 @@ bls_desktop =
                                          "./accelerate/nbody/makefile_based/uniform.3dpts")],
                          target= "./accelerate/nbody", -- Just the root
                          progname= Just "accelerate-nbody" }
+
+  blackscholes size var = 
+              baseline { cmdargs=[size], 
+                         configs= And[ Set (Variant var)
+                                        (RuntimeEnv "IGNORE_THIS" "")],
+                         target= "./accelerate/blackscholes", -- Just the root
+                         progname= Just "accelerate-blackscholes" }
+
   scaleFlops args var = 
       baseline { cmdargs=args, 
                  configs= And[ Set (Variant var) (CompileParam "")],
