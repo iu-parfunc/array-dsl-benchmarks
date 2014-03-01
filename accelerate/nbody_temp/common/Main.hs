@@ -7,14 +7,18 @@
 
 module Main where
 
-import           Data.Array.Accelerate          as A
-import           Data.Array.Accelerate          ((:.),Z(Z))
+import Data.Array.Accelerate          as A
+import Data.Array.Accelerate          ((:.),Z(Z))
+import Data.Array.Accelerate.Trafo (convertAccWith, Phase(..))
 
 import qualified Data.Array.Accelerate.CUDA as CUDA
 import qualified Data.Array.Accelerate.Cilk as Cilk
 import qualified Data.Array.Accelerate.Interpreter as I
 
-import           Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..))
+import Data.Array.Accelerate.Multi (runMultiple)
+
+import Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..))
+import Data.Array.Accelerate.BackendClass as BC
 
 -- system
 import Control.Exception (evaluate)
@@ -92,11 +96,7 @@ writeGeomFile path arr = do
 -- MAIN script
 --------------------------------------------------------------------------------
 
-main = putStrLn "Hello world."
-
-{-
-main :: IO ()
-main = do
+main = do 
   args <- getArgs
   (n) <- case args of
          []  -> do putStrLn "Using default size for input."
@@ -107,34 +107,32 @@ main = do
   let file = case L.lookup "ACCELERATE_INPUT_FILE" env of
               Nothing -> defaultInputFile
               Just s -> s
-    
--- Temporary: for debugging we aren't using a file at all:
-#ifdef DEBUG
-#else
   putStrLn$ "NBODY: Reading requested prefix of input file... "++show n
   tBegin <- getCurrentTime
   raw    <- readGeomFile n file
   tEnd   <- getCurrentTime
   putStrLn$ "Done reading (took "++show (diffUTCTime tEnd tBegin)++"), converting to Acc array.."
-#endif
-
   tBegin <- getCurrentTime
-  let input :: A.Acc (A.Vector Position)
-#ifdef DEBUG      
-      input = A.generate (A.index1$ A.constant$ fromJust n) $ \ix ->
-                let i,one :: A.Exp Double
-                    i = A.fromIntegral $ A.unindex1 ix
-                    one = 1 in
-                A.lift (i,i,i)    
-  putStrLn$ "  Input prefix(4) "++ show(P.take 3$ A.toList $ I.run input)
-#else    
-      input  = A.use input0
-      input0 = A.fromIArray $ raw 
-  putStrLn$ "  Input prefix(4) "++ show(P.take 3$ U.elems raw)
-  evaluate input0
-#endif
-  performGC
-  tEnd   <- getCurrentTime
+  -- let input :: A.Acc (A.Vector Position)
+  --     input  = A.use input0
+  --     input0 = A.fromIArray $ raw 
+  -- putStrLn$ "  Input prefix(4) "++ show(P.take 3$ U.elems raw)
+  -- evaluate input0
+  -- performGC
+  -- tEnd   <- getCurrentTime
+  ----------------------------------------
+
+  let x :: (Acc (Scalar Int), BC.SomeBackend, Phase)
+      x = ( A.unit (A.constant 3), BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
+  runMultiple [ x ]
+  putStrLn "Hello world."
+
+{-
+main :: IO ()
+main = do
+    
+-- Temporary: for debugging we aren't using a file at all:
+
 
   putStrLn$ "Input in CPU memory and did GC (took "++show (diffUTCTime tEnd tBegin)++"), starting benchmark..."
   tBegin <- getCurrentTime

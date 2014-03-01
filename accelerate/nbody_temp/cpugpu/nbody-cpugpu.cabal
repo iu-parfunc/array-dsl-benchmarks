@@ -16,3 +16,4 @@ Executable bench-nbody-cpugpu
                  , accelerate-icc-opencl  >= 0.13.0.99
                  , accelerate             >= 0.13.0.99
                  , accelerate-cuda        >= 0.13.0.99
+                 , accelerate-multidev    >= 0.13.0.99
