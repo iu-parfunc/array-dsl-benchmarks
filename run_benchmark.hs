@@ -71,10 +71,12 @@ main = do
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
   allNBodies 
-  ++ allMultiNBodies
   ++ allScaleFlops
   ++ allScaleFlops2
   ++ allBlackscholes
+
+  ++ allMultiNBodies
+  ++ allMultiBlackscholes
  where 
   -- Argument variation:
   ----------------------------------------
@@ -88,6 +90,14 @@ bls_desktop =
 
   allBlackscholes = concat [ allthree (blackscholes (show arg))
                            | arg <- blackscholes_args ]
+
+  allMultiBlackscholes = 
+       [ baseline { cmdargs=[ show arg ], 
+                    configs= And[ Set (Variant "cpugpu")
+                                   (RuntimeEnv "IGNORE_THIS" "")],
+                    target= "./accelerate/blackscholes_temp/cpugpu",
+                    progname= Just "accelerate-blackscholes-cpugpu" }
+       | arg <- blackscholes_args ]
 
   allNBodies = concat [ allthree (nbody (show arg)) 
                       | arg <- nbody_args ]
