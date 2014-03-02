@@ -1,1 +1,0 @@
-../nbody/SPMD.hs
