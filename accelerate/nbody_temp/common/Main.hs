@@ -131,7 +131,7 @@ main = do
   let 
       total = cpu_weight + gpu_weight
       big    = ((n * gpu_weight) `quot` total)
-      little = (total - big)
+      little = (n - big)
       prog1 = calcAccels1 (A.constant big) input
 --      prog2 = calcAccels2 half input
       prog2 = calcAccels1 (A.constant little) input
