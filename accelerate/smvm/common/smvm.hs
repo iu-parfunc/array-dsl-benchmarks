@@ -3,6 +3,7 @@
 module Main where
 
 import Random
+import Random (randomUArrayR)
 import SMVM.Matrix
 
 import System.Random.MWC
@@ -73,9 +74,8 @@ run i = withSystemRandom $ \gen ->  do
   return $ run_acc smat vec
   where
     run_acc smat vec () = smvmAcc smat vec
-    --
-    v2a :: (V.Unbox a, IArray UArray a) => V.Vector a -> UArray Int a
-    v2a vec = listArray (0, V.length vec - 1) $ V.toList vec
+
+
 
 main :: IO ()
 main = do

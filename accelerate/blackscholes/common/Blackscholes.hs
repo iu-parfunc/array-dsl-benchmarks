@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP, NamedFieldPuns #-}
 module Main where
 
-import Random
+import Random (randomUArrayR)
 
 import System.Random.MWC
 import Data.Array.IArray     as IArray
