@@ -76,9 +76,15 @@ bls_desktop =
   ++ allScaleFlops2
   ++ allBlackscholes
  where 
+  -- Argument variation:
+  ----------------------------------------
+
   nbody_args = [10000, 15000, 25000]
 
   blackscholes_args = [100000, 1000000, 2000000, 10000000]
+
+  -- Building/aggregating all variants:
+  ----------------------------------------
 
   allBlackscholes = concat [ allthree (blackscholes (show arg))
                            | arg <- blackscholes_args ]
@@ -106,17 +112,9 @@ bls_desktop =
                           , args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..13]]
                           ]
 
-  -- Run with all of the backends:
-  allthree fn = 
-    let root = target (fn "seqC") in 
-    [ (fn "seqC") { target= root++"/seq_c/" }
-    , (fn "cuda") { target= root++"/cuda/"  }
-    , varyCilkThreads threadSelection $ (fn "cilk") { target= root++"/cilk/"  }
-    , varyFission threadSelection $ (fn "fission1") { target= root++"/fission1/" }
-    , varyFission threadSelection $ (fn "spmd2")    { target= root++"/spmd2/" }
-    ]
+  -- Define each benchmark's characteristics:
+  -------------------------------------------
 
-  baseline = Benchmark { cmdargs=[], configs= And[], benchTimeOut=Just defaultTimeout, target="", progname=Nothing }
   nbody size var = 
               baseline { cmdargs=[size], 
                          configs= And[ Set (Variant var)
@@ -143,6 +141,21 @@ bls_desktop =
                  configs= And[ Set (Variant var) (CompileParam "")],
                  target= "./accelerate/scale_flops2", -- Just the root
                  progname= Just "accelerate-scaleFlops2" }
+
+  -- Helpers
+  ----------------------------------------
+
+  -- Run with all of the backends:
+  allthree fn = 
+    let root = target (fn "seqC") in 
+    [ (fn "seqC") { target= root++"/seq_c/" }
+    , (fn "cuda") { target= root++"/cuda/"  }
+    , varyCilkThreads threadSelection $ (fn "cilk") { target= root++"/cilk/"  }
+    , varyFission threadSelection $ (fn "fission1") { target= root++"/fission1/" }
+    , varyFission threadSelection $ (fn "spmd2")    { target= root++"/spmd2/" }
+    ]
+
+  baseline = Benchmark { cmdargs=[], configs= And[], benchTimeOut=Just defaultTimeout, target="", progname=Nothing }
 
 
 
