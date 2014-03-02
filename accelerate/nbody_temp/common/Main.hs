@@ -162,7 +162,7 @@ main = do
 
       gogo "gpufrac" = do 
         putStrLn "\n\nGPU fraction run:"
-        runMultiple [ y ]
+        runMultiple [ x ]
 
       gogo "cpufrac" = do 
         putStrLn "\n\nCPU fraction run:"
