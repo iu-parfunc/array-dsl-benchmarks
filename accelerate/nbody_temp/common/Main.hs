@@ -99,13 +99,13 @@ writeGeomFile path arr = do
 
 main = do 
   args <- getArgs
-  (n,cpu_weight,gpu_weight) <- 
+  (n,cpu_weight,gpu_weight,which) <- 
        case args of
          []  -> do putStrLn "Using default size for input."
-                   return (100,1,1)
+                   return (100,1,1, "all")
          [n] -> do putStrLn$ "NBODY size on command line: N="++ show n
-                   return (read n, 1,1)
-         [n,c,g] -> return (read n, read c, read g)
+                   return (read n, 1,1, "all")
+         [n,c,g,which] -> return (read n, read c, read g, which)
 
   env <- getEnvironment
   let file = case L.lookup "ACCELERATE_INPUT_FILE" env of
@@ -144,19 +144,42 @@ main = do
   let y :: (Acc Ty, BC.SomeBackend, Phase)
       y = ( prog2, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig)
 
-  -- Temp, test individually first:
 
-  putStrLn "\nNow for SPLIT run:"
-  runMultiple [ x, y ]
-  putStrLn "All done with runMultiple!"
+  let gogo "all" = do gogo "cpufrac"
+                      gogo "gpufrac"
+                      gogo "cpufull"
+                      gogo "gpufull"
+                      gogo "cpugpu" 
+      gogo "cpufull" = do 
+        putStrLn "\n\nCPU full run:"
+        runMultiple [ ( full, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig ) ]
 
-  putStrLn "GPU full run:"
-  runMultiple [ ( full, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig ) ]
+      gogo "gpufull" = do 
+        putStrLn "\n\nGPU full run:"
+        runMultiple [ ( full, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig) ]
 
-  putStrLn "CPU full run:"
-  runMultiple [ ( full, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig) ]
+      gogo "gpufrac" = do 
+        putStrLn "\n\nGPU fraction run:"
+        runMultiple [ y ]
 
+      gogo "cpufrac" = do 
+        putStrLn "\n\nCPU fraction run:"
+        runMultiple [ y ]
 
+      -- Temp, test individually first:
+      gogo "cpugpu" = do 
+        putStrLn "\n\nNow for SPLIT run CPU/GPU:"
+        runMultiple [ x, y ]
+        putStrLn "All done with runMultiple!"
+
+      gogo "gpugpu" = do 
+        putStrLn "\n\nNow for SPLIT run on GPU/GPU:"
+        let [b1,b2] = CUDA.allBackends
+        runMultiple [ ( prog1, BC.SomeBackend b1, CUDA.defaultTrafoConfig)
+                    , ( prog2, BC.SomeBackend b2, CUDA.defaultTrafoConfig) ]
+        putStrLn "All done with runMultiple!"
+
+  gogo which
   exitSuccess
 
 -- type Ty = (Scalar Int)
