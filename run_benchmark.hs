@@ -107,7 +107,7 @@ bls_desktop =
                     configs= And[ Set (Variant "cpugpu")
                                   (RuntimeEnv "ACCELERATE_INPUT_FILE"
                                    "./accelerate/nbody_temp/common/uniform.3dpts")],
-                    target= "./accelerate/nbody_temp/cpugpu/",
+                    target= "./accelerate/nbody_temp/cpugpu",
                     progname= Just "accelerate-nbody-cpugpu" }
        | arg <- nbody_args ]
                 
