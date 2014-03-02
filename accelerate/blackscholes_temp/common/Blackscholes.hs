@@ -5,21 +5,28 @@ import Random (randomUArrayR)
 
 import System.Random.MWC
 import Data.Array.IArray     as IArray
-import Data.Array.Accelerate as Acc
+import Data.Array.Accelerate as A
 import Prelude               as P
 
-#ifdef ACCBACKEND
-import qualified ACCBACKEND as Bkend
-#else
-#error "Must specify ACCBACKEND CPP variable to build this nbody benchmark."
--- import qualified Data.Array.Accelerate.CUDA as Bkend
-#endif
+-- #ifdef ACCBACKEND
+-- import qualified ACCBACKEND as Bkend
+-- #else
+-- #error "Must specify ACCBACKEND CPP variable to build this nbody benchmark."
+-- -- import qualified Data.Array.Accelerate.CUDA as Bkend
+-- #endif
 
+import Data.Array.Accelerate.Trafo (convertAccWith, Phase(..))
+import qualified Data.Array.Accelerate.BackendClass as BC
 import           Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..))
 import           Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 import Control.Exception (evaluate)
 import System.Environment (getArgs)
+import System.Exit 
+import Data.Array.Accelerate.Multi (runMultiple)
+import qualified Data.Array.Accelerate.CUDA as CUDA
+import qualified Data.Array.Accelerate.Cilk as Cilk
+
 
 riskfree, volatility :: Float
 riskfree   = 0.02
@@ -44,12 +51,12 @@ cnd' d =
 
 
 blackscholesAcc :: Vector (Float, Float, Float) -> Acc (Vector (Float, Float))
-blackscholesAcc xs = Acc.map go (Acc.use xs)
+blackscholesAcc xs = A.map go (A.use xs)
   where
   go x =
-    let (price, strike, years) = Acc.unlift x
-        r       = Acc.constant riskfree
-        v       = Acc.constant volatility
+    let (price, strike, years) = A.unlift x
+        r       = A.constant riskfree
+        v       = A.constant volatility
         v_sqrtT = v * sqrt years
         d1      = (log (price / strike) + (r + 0.5 * v * v) * years) / v_sqrtT
         d2      = d1 - v_sqrtT
@@ -58,7 +65,7 @@ blackscholesAcc xs = Acc.map go (Acc.use xs)
         cndD2   = cnd d2
         x_expRT = strike * exp (-r * years)
     in
-    Acc.lift ( price * cndD1 - x_expRT * cndD2
+    A.lift ( price * cndD1 - x_expRT * cndD2
              , x_expRT * (1.0 - cndD2) - price * (1.0 - cndD1))
 
 
@@ -83,6 +90,8 @@ blackscholesRef xs = listArray (bounds xs) [ go x | x <- elems xs ]
 -- Main
 -- ----
 
+type Ty = (A.Vector (Float,Float))
+
 run :: Int -> IO (() -> IArray.Array Int (Float,Float), () -> Acc (Vector (Float,Float)))
 run n = withSystemRandom $ \gen -> do
   v_sp <- randomUArrayR (5,30)    gen n
@@ -90,7 +99,7 @@ run n = withSystemRandom $ \gen -> do
   v_oy <- randomUArrayR (0.25,10) gen n
 
   let v_psy = listArray (0,n-1) $ P.zip3 (elems v_sp) (elems v_os) (elems v_oy)
-      a_psy = Acc.fromIArray v_psy
+      a_psy = A.fromIArray v_psy
   --
   return (run_ref v_psy, run_acc a_psy)
   where
@@ -103,24 +112,32 @@ main = do args <- getArgs
           let inputSize = case args of
                             [] -> 100
                             [sz] -> read sz
+          let half  = (inputSize `quot` 2)
+          (_,run_acc) <- run half
 
-          (_,run_acc) <- run inputSize -- 0000
+          let prog1 = run_acc ()
+              prog2 = prog2
 
-          tBegin <- getCurrentTime
-          (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (run_acc ())
-          tEnd   <- getCurrentTime
-          let AccTiming{compileTime,runTime,copyTime} = times
-          putStrLn$ "  All timing: "++ show times
-          putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
-          putStrLn$ "JITTIME: "++ show compileTime
-          putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
+          let x :: (Acc Ty, BC.SomeBackend, Phase)
+              x = ( prog1, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
 
-          -- let vec = Bkend.run $ run_acc ()
+          let y :: (Acc Ty, BC.SomeBackend, Phase)
+              y = ( prog2, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig)
 
-          -- t1 <- getCurrentTime
-          -- evaluate vec
-          -- t2 <- getCurrentTime
-          -- let dt = t2 `diffUTCTime` t1
-          -- putStrLn$ "SELFTIMED-with-compile: "++ show dt
---	  putStrLn$ "Final checksum: "++ show sum
-  
+          -- (time,_) <- timeit$ runMultiple [ y ]
+          runMultiple [ x,y ]
+          putStrLn "All done with runMultiple!"
+
+          -- (times,_output) <- runTimed Cilk.defaultBackend Nothing Cilk.defaultTrafoConfig prog1
+          -- putStrLn$ "  All timing: "++ show times
+          exitSuccess
+
+          -- tBegin <- getCurrentTime
+          -- (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (run_acc ())
+          -- tEnd   <- getCurrentTime
+          -- let AccTiming{compileTime,runTime,copyTime} = times
+
+          -- putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
+          -- putStrLn$ "JITTIME: "++ show compileTime
+          -- putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
+
