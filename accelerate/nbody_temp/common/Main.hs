@@ -99,11 +99,14 @@ writeGeomFile path arr = do
 
 main = do 
   args <- getArgs
-  (n) <- case args of
+  (n,cpu_weight,gpu_weight) <- 
+       case args of
          []  -> do putStrLn "Using default size for input."
-                   return (100)
+                   return (100,1,1)
          [n] -> do putStrLn$ "NBODY size on command line: N="++ show n
-                   return (read n)
+                   return (read n, 1,1)
+         [n,c,g] -> return (read n, read c, read g)
+
   env <- getEnvironment
   let file = case L.lookup "ACCELERATE_INPUT_FILE" env of
               Nothing -> defaultInputFile
@@ -125,12 +128,15 @@ main = do
   putStrLn$ "Input in CPU memory and did GC (took "++show (diffUTCTime tEnd tBegin)++"), starting benchmark..."
   ----------------------------------------
 
-  let factor = 18
-      big    = ((n * (factor - 1)) `quot` factor)
-      little = (n - big)
+  let 
+      total = cpu_weight + gpu_weight
+      big    = ((n * gpu_weight) `quot` total)
+      little = (total - big)
       prog1 = calcAccels1 (A.constant big) input
 --      prog2 = calcAccels2 half input
       prog2 = calcAccels1 (A.constant little) input
+
+      full  = calcAccels1 (A.constant n) input
 
   let x :: (Acc Ty, BC.SomeBackend, Phase)
       x = ( prog1, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
@@ -139,13 +145,18 @@ main = do
       y = ( prog2, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig)
 
   -- Temp, test individually first:
---  runMultiple [ x ]
---  runMultiple [ y ]
 
---  print (I.run prog)
-
+  putStrLn "\nNow for SPLIT run:"
   runMultiple [ x, y ]
   putStrLn "All done with runMultiple!"
+
+  putStrLn "GPU full run:"
+  runMultiple [ ( full, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig ) ]
+
+  putStrLn "CPU full run:"
+  runMultiple [ ( full, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig) ]
+
+
   exitSuccess
 
 -- type Ty = (Scalar Int)
