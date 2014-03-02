@@ -125,10 +125,12 @@ main = do
   putStrLn$ "Input in CPU memory and did GC (took "++show (diffUTCTime tEnd tBegin)++"), starting benchmark..."
   ----------------------------------------
 
-  let half  = A.constant (n `quot` 2)
-      prog1 = calcAccels1 half input
+  let factor = 18
+      big    = ((n * (factor - 1)) `quot` factor)
+      little = (n - big)
+      prog1 = calcAccels1 (A.constant big) input
 --      prog2 = calcAccels2 half input
-      prog2 = calcAccels1 half input
+      prog2 = calcAccels1 (A.constant little) input
 
   let x :: (Acc Ty, BC.SomeBackend, Phase)
       x = ( prog1, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
