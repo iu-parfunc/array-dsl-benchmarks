@@ -152,11 +152,11 @@ main = do
                       gogo "cpugpu" 
       gogo "cpufull" = do 
         putStrLn "\n\nCPU full run:"
-        runMultiple [ ( full, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig ) ]
+        runMultiple [ ( full, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig) ]
 
       gogo "gpufull" = do 
         putStrLn "\n\nGPU full run:"
-        runMultiple [ ( full, BC.SomeBackend Cilk.defaultBackend, Cilk.defaultTrafoConfig) ]
+        runMultiple [ ( full, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig ) ]
 
       gogo "gpufrac" = do 
         putStrLn "\n\nGPU fraction run:"
