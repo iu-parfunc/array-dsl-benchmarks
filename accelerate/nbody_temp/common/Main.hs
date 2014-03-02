@@ -138,6 +138,8 @@ main = do
 
       full  = calcAccels1 (A.constant n) input
 
+  putStrLn$ "DIVIDING WORK INTO PIECES: "++show (big,little)
+
   let x :: (Acc Ty, BC.SomeBackend, Phase)
       x = ( prog1, BC.SomeBackend CUDA.defaultBackend, CUDA.defaultTrafoConfig) 
 
