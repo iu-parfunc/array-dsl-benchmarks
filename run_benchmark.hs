@@ -72,7 +72,7 @@ bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
   allNBodies 
   ++ allMultiNBodies
---  ++ allScaleFlops
+  ++ allScaleFlops
   ++ allScaleFlops2
   ++ allBlackscholes
  where 
@@ -99,7 +99,7 @@ bls_desktop =
   allScaleFlops = let sz = "2000000" in 
                   concat [ allthree (scaleFlops args) 
                          | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..10]]
-                         ]  
+                         ]
 
   allScaleFlops2 = concat [ allthree (scaleFlops2 args) 
                           | sz <- ["1000000", "2000000"]
