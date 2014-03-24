@@ -11,6 +11,13 @@ cd `dirname $0`
 TOP=`pwd`
 HSBENCHER_SANDBOX=$TOP/.cabal-sandbox/
 
+if [ -f "$HOME/rn_jenkins_scripts/acquire_ghc.sh" ]; then
+  source $HOME/rn_jenkins_scripts/acquire_ghc.sh
+fi
+if [ -f "$HOME/rn_jenkins_scripts/acquire_cuda.sh" ]; then
+  source $HOME/rn_jenkins_scripts/acquire_cuda.sh
+fi
+
 which cabal
 cabal --version
 
