@@ -81,7 +81,8 @@ bls_desktop =
   -- Argument variation:
   ----------------------------------------
 
-  nbody_args = [10000, 15000, 25000]
+  -- nbody_args = [10000, 15000, 25000]
+  nbody_args = [1000,2000 .. 66000]
 
   blackscholes_args = [100000, 1000000, 2000000, 10000000]
 
