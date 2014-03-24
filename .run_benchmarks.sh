@@ -71,7 +71,7 @@ done
 
 # (0) Build benchmark runner:
 cd $TOP/
-make
+# make
 
 # (1) First we depend on the jenkins script to install the basic packages
 # and run tests:
