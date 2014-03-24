@@ -132,7 +132,7 @@ bls_desktop =
                                         (RuntimeEnv "ACCELERATE_INPUT_FILE"
                                          "./accelerate/nbody/makefile_based/uniform.3dpts")],
                          target= "./accelerate/nbody", -- Just the root
-                         progname= Just "accelerate-nbody" }
+                         progname= Just "accelerate-nbody-float" }
 
   blackscholes size var = 
               baseline { cmdargs=[size], 

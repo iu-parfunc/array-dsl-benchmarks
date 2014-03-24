@@ -42,7 +42,7 @@ import Common.Util (plusV)
 -- Settings
 --------------------------------------------------------------------------------
 
-type R          = Double
+type R          = Float
 type Velocity   = (R, R, R)
 type Position   = (R, R, R)
 type Accel      = (R, R, R)
@@ -50,12 +50,15 @@ type Accel      = (R, R, R)
 defaultInputFile = "./uniform.3dpts"
 outputFile = "./nbody_out.3dpts"
 
+fromDouble :: Fractional a => Double -> a
+fromDouble = fromRational . toRational
+
 --------------------------------------------------------------------------------
 -- Reading/writing file data
 --------------------------------------------------------------------------------
 
 -- | Read a PBBS geometry file (3D points):
-readGeomFile :: Maybe Int -> FilePath -> IO (U.Array Int (Double,Double,Double))
+readGeomFile :: Maybe Int -> FilePath -> IO (U.Array Int (R,R,R))
 readGeomFile len path = do
   str <- B.readFile path
   let (hd:lines) = B.lines str
@@ -74,12 +77,13 @@ readGeomFile len path = do
         let Just (x,r1) = readDouble ln
             Just (y,r2) = readDouble (trim r1)
             Just (z,_ ) = readDouble (trim r2)
-        in (x,y,z)
+        in (fromDouble x, fromDouble y, fromDouble z)
   case hd of
     "pbbs_sequencePoint3d" -> return (U.listArray (0,len2 - 1) parsed)
     oth -> error$"Expected header line (pbbs_sequencePoint3d) got: "++show oth
 
-writeGeomFile :: FilePath -> A.Vector (Double,Double,Double) -> IO ()
+writeGeomFile :: FilePath -> A.Vector (R,R,R) -> IO ()
+-- writeGeomFile :: FilePath -> A.Vector (Double,Double,Double) -> IO ()
 writeGeomFile path arr = do
   hnd <- openFile path WriteMode
   B.hPutStrLn hnd "pbbs_sequencePoint3d"
