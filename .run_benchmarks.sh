@@ -11,6 +11,9 @@ cd `dirname $0`
 TOP=`pwd`
 HSBENCHER_SANDBOX=$TOP/.cabal-sandbox/
 
+if [ "$JENKINS_GHC" == "" ]; then
+  export JENKINS_GHC=7.6.3
+fi
 if [ -f "$HOME/rn_jenkins_scripts/acquire_ghc.sh" ]; then
   source $HOME/rn_jenkins_scripts/acquire_ghc.sh
 fi
