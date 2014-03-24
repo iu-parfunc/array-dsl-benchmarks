@@ -75,7 +75,7 @@ make
 
 # (1) First we depend on the jenkins script to install the basic packages
 # and run tests:
-cd $TOP/
+# cd $TOP/
 # ACCELERATE_INSTALL_ONLY=1 ./.jenkins_script.sh
 
 # PKGS=" ./ ./accelerate-backend-kit/backend-kit \
@@ -83,7 +83,11 @@ cd $TOP/
 #        ./accelerate-multidev/ ./accelerate-cuda/ "
 
 # [2014.03.24] For now install from hackage:
-cabal install accelerate-0.14.0.0 accelerate-cuda-0.14.0.0 -j
+# cabal install accelerate-0.14.0.0 accelerate-cuda-0.14.0.0 -j
+
+# [2014.03.24] And... having problems unless we install everything at once:
+cabal install -ffusion --bindir=`pwd`  --program-suffix=".exe" -j . ./HSBencher/ \ 
+      accelerate-0.14.0.0 accelerate-cuda-0.14.0.0 
 
 
 # (2) Then we run the actual benchmarks
