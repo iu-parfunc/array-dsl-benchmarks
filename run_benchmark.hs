@@ -92,7 +92,7 @@ bls_desktop =
 
   allReduces = [ baseline { cmdargs= map (show . round . (*1000000)) (0.25:0.5:[1..16]),
                             configs= And[ Set (Variant "cuda") (RuntimeEnv "IGNORE_THIS" "")],
-                            target= "./accelerate/reduce/cuda",
+                            target= "./accelerate/reduce/cuda/reduce-cuda.cabal",
                             progname= Just "accelerate-reduce-microbench" }
                ]
 
