@@ -4,9 +4,9 @@
 
 module Main where
 import Control.Monad
+import Control.Exception
 import System.Random.MWC
 import Data.Array.IArray     as IArray
-import Data.Array.Accelerate as Acc
 import Prelude               as P
 import Random (randomUArrayR, convertUArray)
 
@@ -17,9 +17,8 @@ import qualified ACCBACKEND as Bkend
 -- import qualified Data.Array.Accelerate.CUDA as Bkend
 #endif
 
-import Data.Array.Accelerate as A 
-import Data.Array.Accelerate as Acc
-import Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..), Backend(..))
+import Data.Array.Accelerate  as A  hiding ((++))
+-- import Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..), Backend(..))
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 
 import Control.Exception (evaluate)
@@ -57,15 +56,18 @@ main = do args <- getArgs
               go0  = dummy inp'
               go   = reduce inp'              
 
-          (copy, (_,_output)) <- timeit$ runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig go0
+          (copy, _) <- timeit$ evaluate $ Bkend.run go0
+          -- (copy, (_,_output)) <- timeit$ runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig go0
           putStrLn$ "Time to copy and do the dummy computation: "++ show copy
 
           let loop 0 res   = return $! res
               loop n (j,t) = do 
-                (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig go
-                let AccTiming{compileTime,runTime,copyTime} = times
+                (times,_) <- timeit $ evaluate $ Bkend.run go
+                                   -- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig go
+--                let AccTiming{compileTime,runTime,copyTime} = times
 --                loop (n-1) (j+compileTime, t+runTime+copyTime)
-                loop (n-1) (j+compileTime, t+runTime)
+--                loop (n-1) (j+compileTime, t+runTime)
+                loop (n-1) (0, t+times)
           tBegin <- getCurrentTime
           -- Run the kernel 1000 times:                               
           (jittime,runtime) <- loop 1000 (0,0)
