@@ -86,8 +86,8 @@ make
 # cabal install accelerate-0.14.0.0 accelerate-cuda-0.14.0.0 -j
 
 # [2014.03.24] And... having problems unless we install everything at once:
-cabal install -ffusion --bindir=`pwd`  --program-suffix=".exe" -j . ./HSBencher/ \ 
-      accelerate-0.14.0.0 accelerate-cuda-0.14.0.0 
+cabal install -ffusion --bindir=`pwd`  --program-suffix=".exe" -j . ./HSBencher/ \
+      accelerate-0.14.0.0 accelerate-cuda-0.14.0.0
 
 
 # (2) Then we run the actual benchmarks
