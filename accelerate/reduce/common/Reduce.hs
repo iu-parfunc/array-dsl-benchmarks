@@ -3,7 +3,7 @@
 -- | A simple reduction microbenchmark.
 
 module Main where
-
+import Control.Monad
 import System.Random.MWC
 import Data.Array.IArray     as IArray
 import Data.Array.Accelerate as Acc
@@ -30,17 +30,18 @@ import System.Environment (getArgs)
 -- runrun :: Int -> IO (() -> UArray Int Float, () -> Acc (Vector Float))
 -- mkArr :: Int -> IO (UArray Int Float)
 mkArr :: Int -> IO (Vector Float)
-mkArr nelements = withSystemRandom $ \gen -> do
-  v1    <- randomUArrayR (-1,1) gen nelements
-  v1'   <- convertUArray v1
-  return v1'
---  alpha <- uniform gen
---  run_acc alpha xs ys () = saxpyAcc alpha xs ys
+-- mkArr nelements = withSystemRandom $ \gen -> do
+--   v1  <- randomUArrayR (-1,1) gen nelements
+--   v1' <- convertUArray v1
+--   return v1'
+mkArr nelements = return $! 
+    Bkend.run (A.generate (index1 (constant nelements)) (A.fromIntegral . unindex1))
 
---  
 reduce :: Acc (Vector Float) -> Acc (Scalar Float)
 reduce arr = A.fold (+) 0 arr
 
+dummy :: Acc (Vector Float) -> Acc (Scalar Float)
+dummy arr = A.unit $ arr A.! (index1 0)
 
 main :: IO ()
 main = do args <- getArgs 
@@ -48,19 +49,31 @@ main = do args <- getArgs
                             []   -> 100
                             [sz] -> read sz
           
+          putStrLn$ "Running with array size "++ show inputSize
           (t0,input) <- timeit$ mkArr inputSize
+          putStrLn$ "Time to create input array: "++ show t0
 
-          let go = reduce (A.use input)
+          let inp' = A.use input 
+              go0  = dummy inp'
+              go   = reduce inp'              
 
+          (copy, (_,_output)) <- timeit$ runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig go0
+          putStrLn$ "Time to copy and do the dummy computation: "++ show copy
+
+          let loop 0 res   = return $! res
+              loop n (j,t) = do 
+                (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig go
+                let AccTiming{compileTime,runTime,copyTime} = times
+--                loop (n-1) (j+compileTime, t+runTime+copyTime)
+                loop (n-1) (j+compileTime, t+runTime)
           tBegin <- getCurrentTime
-          (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig go
+          -- Run the kernel 1000 times:                               
+          (jittime,runtime) <- loop 1000 (0,0)
           tEnd   <- getCurrentTime
-          let AccTiming{compileTime,runTime,copyTime} = times
-          putStrLn$ "  All timing: "++ show times
-          putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
-          putStrLn$ "JITTIME: "++ show compileTime
-          putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
-
+          putStrLn$ "  Total time for 1000 kernels "++  show (diffUTCTime tEnd tBegin)
+          putStrLn$ "  Summed times for EACH kernel "++ show runtime
+          putStrLn$ "JITTIME: "  ++ show jittime
+          putStrLn$ "SELFTIMED: "++ show runtime
           putStrLn "Done with benchmark."
           return ()
 
