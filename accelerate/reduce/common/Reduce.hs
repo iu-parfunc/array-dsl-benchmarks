@@ -8,7 +8,7 @@ import Control.Exception
 import System.Random.MWC
 import Data.Array.IArray     as IArray
 import Prelude               as P
-import Random (randomUArrayR, convertUArray)
+import RandomArray (randomUArrayR, convertUArray)
 
 #ifdef ACCBACKEND
 import qualified ACCBACKEND as Bkend

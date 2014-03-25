@@ -97,8 +97,12 @@ cabal install -ffusion --bindir=`pwd`  --program-suffix=".exe" -j . ./HSBencher/
 # ----------------------------------------
 
 # Parfunc account, registered app in api console:
-CID=905767673358.apps.googleusercontent.com
-SEC=2a2H57dBggubW1_rqglC7jtK
+# CID=905767673358.apps.googleusercontent.com
+# SEC=2a2H57dBggubW1_rqglC7jtK
+
+# Second Google API Project to get around quota temporarily:
+CID=546809307027-8tm2lp5gtqg5o3pn3s016gd6467cf7j3.apps.googleusercontent.com
+SEC=148aQ08EPpgkb0DiYVLoT9X2
 
 # Accelerate/multidev table docID:
 # TABID=1E17ssTkVafPYjzPjO9m1uOqlq8Cz2T9D48PQo7s
