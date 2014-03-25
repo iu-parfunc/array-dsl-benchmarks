@@ -44,17 +44,24 @@ dummy arr = A.unit $ arr A.! (index1 0)
 
 main :: IO ()
 main = do args <- getArgs 
-          let inputSize = case args of
-                            []   -> 100
-                            [sz] -> read sz
-          
-          putStrLn$ "Running with array size "++ show inputSize
+          let (inputSize,mode) = case args of
+                                  []      -> (100,"awhile")
+                                  [sz]    -> (read sz,"awhile")
+                                  [sz,md] -> (read sz,md)
+
+          putStrLn$ "Running with array size "++ show inputSize ++" mode: " ++mode
           (t0,input) <- timeit$ mkArr inputSize
           putStrLn$ "Time to create input array: "++ show t0
 
           let inp' = A.use input 
               go0  = dummy inp'
-              go   = reduce inp'              
+              goLoop   = reduce inp' 
+              goAwhile = error "Reduce.hs -- FINISHME"
+
+              gogo = case mode of
+                      "awhile" -> goAwhile
+                      "loop"   -> goLoop
+                      oth      -> error$"Reduce.hs, unrecognized mode as second command line argument: "++mode
 
           (copy, _) <- timeit$ evaluate $ Bkend.run go0
           -- (copy, (_,_output)) <- timeit$ runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig go0
@@ -62,7 +69,7 @@ main = do args <- getArgs
 
           let loop 0 res   = return $! res
               loop n (j,t) = do 
-                (times,_) <- timeit $ evaluate $ Bkend.run go
+                (times,_) <- timeit $ evaluate $ Bkend.run gogo
                                    -- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig go
 --                let AccTiming{compileTime,runTime,copyTime} = times
 --                loop (n-1) (j+compileTime, t+runTime+copyTime)
