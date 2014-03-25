@@ -90,11 +90,11 @@ bls_desktop =
   -- Building/aggregating all variants:
   ----------------------------------------
 
-  allReduces = [ baseline { cmdargs= map (show . round . (*1000000)) (0.25:0.5:[1..16]),
+  allReduces = [ baseline { cmdargs= [show $ round $  1000000 * sz],
                             configs= And[ Set (Variant "cuda") (RuntimeEnv "IGNORE_THIS" "")],
                             target= "./accelerate/reduce/cuda/reduce-cuda.cabal",
                             progname= Just "accelerate-reduce-microbench" }
-               ]
+               | sz <- (0.25:0.5:[1..16]) ]
 
   allBlackscholes = concat [ allthree (blackscholes (show arg))
                            | arg <- blackscholes_args ]
