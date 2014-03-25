@@ -6,7 +6,7 @@ module Main where
 import Control.Monad
 import Control.Exception
 import System.Random.MWC
-import Data.Array.IArray     as IArray
+import Data.Array.IArray as IArray hiding ((!))
 import Prelude               as P
 import RandomArray (randomUArrayR, convertUArray)
 
@@ -42,6 +42,38 @@ reduce arr = A.fold (+) 0 arr
 dummy :: Acc (Vector Float) -> Acc (Scalar Float)
 dummy arr = A.unit $ arr A.! (index1 0)
 
+reduceLoop :: Int -> Acc (Vector Float) -> Acc (Scalar Float)
+reduceLoop iters arr = 
+     let a :: Acc (Scalar Int)
+         b :: Acc (Scalar Float)
+         c :: Acc (Vector Float)
+         (a,b,c) = unlift final
+     in b
+  where 
+  final :: Acc (Scalar Int, Scalar Float, Vector Float)
+  final = A.awhile test body start
+
+  start :: Acc (Scalar Int, Scalar Float, Vector Float)
+  start = lift (A.unit 0, A.unit 0, arr)
+
+  test :: Acc (Scalar Int, Scalar Float, Vector Float) -> Acc (Scalar Bool)
+  test arr = 
+     let a :: Acc (Scalar Int)
+         b :: Acc (Scalar Float)
+         c :: Acc (Vector Float)
+         (a,b,c) = unlift arr 
+     in A.unit $   a ! index0 ==* constant iters
+               ||* b ! index0 ==* 99 -- Use this for something so it doesn't get eliminated
+
+  body :: Acc (Scalar Int, Scalar Float, Vector Float) ->
+          Acc (Scalar Int, Scalar Float, Vector Float)
+  body arr = 
+     let a :: Acc (Scalar Int)
+         b :: Acc (Scalar Float)
+         c :: Acc (Vector Float)
+         (a,b,c) = unlift arr 
+     in lift (a,reduce c,c)
+
 main :: IO ()
 main = do args <- getArgs 
           let (inputSize,mode) = case args of
@@ -56,7 +88,7 @@ main = do args <- getArgs
           let inp' = A.use input 
               go0  = dummy inp'
               goLoop   = reduce inp' 
-              goAwhile = error "Reduce.hs -- FINISHME"
+              goAwhile = reduceLoop totaliters inp'
 
               gogo = case mode of
                       "awhile" -> goAwhile
@@ -77,7 +109,7 @@ main = do args <- getArgs
                 loop (n-1) (0, t+times)
           tBegin <- getCurrentTime
           -- Run the kernel 1000 times:                               
-          (jittime,runtime) <- loop 1000 (0,0)
+          (jittime,runtime) <- loop totaliters (0,0)
           tEnd   <- getCurrentTime
           putStrLn$ "  Total time for 1000 kernels "++  show (diffUTCTime tEnd tBegin)
           putStrLn$ "  Summed times for EACH kernel "++ show runtime
@@ -85,6 +117,8 @@ main = do args <- getArgs
           putStrLn$ "SELFTIMED: "++ show runtime
           putStrLn "Done with benchmark."
           return ()
+
+totaliters = 1000
 
 -- timeit :: Fractional t => IO a -> (a,t)
 timeit :: IO a -> IO (Double,a)
