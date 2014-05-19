@@ -7,7 +7,7 @@
 
 module Main where
 
-import           Data.Array.Accelerate          as A
+import           Data.Array.Accelerate          as A hiding ((++))
 import           Data.Array.Accelerate          ((:.),Z(Z))
 #ifdef ACCBACKEND
 import qualified ACCBACKEND as Bkend
