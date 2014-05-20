@@ -70,13 +70,14 @@ main = do
 
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
-  allNBodies 
-  ++ allScaleFlops
-  ++ allScaleFlops2
-  ++ allBlackscholes
+  allReduces
+  -- allNBodies 
+  -- ++ allScaleFlops
+  -- ++ allScaleFlops2
+  -- ++ allBlackscholes
 
-  ++ allMultiNBodies
-  ++ allMultiBlackscholes
+  -- ++ allMultiNBodies
+  -- ++ allMultiBlackscholes
  where 
   -- Argument variation:
   ----------------------------------------
@@ -88,6 +89,13 @@ bls_desktop =
 
   -- Building/aggregating all variants:
   ----------------------------------------
+
+  allReduces = [ baseline { cmdargs= [show $ round $  1000000 * sz, mode],
+                            configs= And[ Set (Variant "cuda") (RuntimeEnv "IGNORE_THIS" "")],
+                            target= "./accelerate/reduce/cuda/reduce-cuda.cabal",
+                            progname= Just "accelerate-reduce-microbench" }
+               | sz <- (0.25:0.5:[1..16]) 
+               , mode <- ["awhile", "loop"]]
 
   allBlackscholes = concat [ allthree (blackscholes (show arg))
                            | arg <- blackscholes_args ]
