@@ -1,7 +1,17 @@
 #include <stdlib.h> 
-
 #include <stdio.h> 
+#include <sys/time.h> 
+
+
+/* OpenACC math library */ 
 #include <accelmath.h>
+
+
+
+/* ---------------------------------------------------------------------- */ 
+
+#define DEFAULT_SIZE 10 
+
 
 
 /* ---------------------------------------------------------------------- */ 
@@ -68,9 +78,7 @@ void calcAccels(int n,
                 Point * restrict bodies, 
                 Point * restrict accels) {
   
-
  /* get accel from every combination */ 
-
 #pragma acc parallel loop
   for (int i = 0; i < n; ++i) { 
     Point p1 = bodies[i]; 
@@ -97,20 +105,34 @@ void calcAccels(int n,
   
 } 
 
-
-
-void saxpy(int n, float a, float *x, float *restrict y) {
-#pragma acc parallel loop
-  for (int i = 0; i < n; ++i) 
-    y[i] = a*x[i] + y[i]; 
-}
+/* ---------------------------------------------------------------------- */ 
+void printUsage(char* name){ 
+  printf("OpenAcc nbody benchmark\n"); 
+  printf("Usage: %s [N]\n",name); 
+} 
 
 /* ---------------------------------------------------------------------- */ 
-int main()
+int main(int argc, char **argv)
 {
   FILE *fp; 
   Point *p; 
   Point *a; 
+
+  int size = 0; 
+  
+  struct timeval begin; 
+  struct timeval end; 
+
+  switch (argc) { 
+  case 1: size = DEFAULT_SIZE; break; 
+  case 2: sscanf(argv[1],"%d",&size); break;  
+  default: 
+    printUsage(argv[0]); 
+    exit(EXIT_FAILURE);
+  } 
+  
+  printf("Running OpenAcc nbody benchmark on %d bodies...\n",size);
+  
 
   fp = fopen("data.dat","r");
   
@@ -118,21 +140,28 @@ int main()
     exit(EXIT_FAILURE);
     
   
-  p = (Point*)malloc(10*sizeof(Point)); 
-  a = (Point*)malloc(10*sizeof(Point)); 
+  p = (Point*)malloc(size*sizeof(Point)); 
+  a = (Point*)malloc(size*sizeof(Point)); 
 
   
-  loadData(fp,10,p); 
+  loadData(fp,size,p); 
 
+  gettimeofday(&begin,0);
+  calcAccels(size,p,a);
+  gettimeofday(&end,0);
   
-  calcAccels(10,p,a) ;
+    
+  double t = (end.tv_sec - begin.tv_sec) + 
+             ((end.tv_usec - begin.tv_usec) / 1000000.0F);
 
+  printf("SELFTIMED: %lf \n\n",t); 
 
+#ifdef DEBUG 
   for (int i = 0; i < 10; ++i) { 
     printf("POINT: %lf %lf %lf\n", p[i].x, p[i].y, p[i].z); 
     printf("ACCEL: %lf %lf %lf\n", a[i].x, a[i].y, a[i].z); 
   }
- 
+#endif 
   
   return 0;
 }
