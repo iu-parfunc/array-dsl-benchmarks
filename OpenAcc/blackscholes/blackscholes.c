@@ -3,6 +3,8 @@
 #include <stdio.h> 
 #include <accelmath.h>
 
+
+/* These defines are all trash */ 
 #define RSQRT2PI 1 /* bad example that dont show everything */ 
 #define A5 1 
 #define A4 1 
