@@ -6,8 +6,6 @@
 /* OpenACC math library */ 
 #include <accelmath.h>
 
-
-
 /* ---------------------------------------------------------------------- */ 
 
 #define DEFAULT_SIZE 10 
