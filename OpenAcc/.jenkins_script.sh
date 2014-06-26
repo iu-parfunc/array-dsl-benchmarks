@@ -6,5 +6,5 @@ set -e
 dir=pwd
 
 
-cd OpenAcc/nbody 
+cd nbody 
 make 
