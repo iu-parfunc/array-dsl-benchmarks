@@ -1,0 +1,16 @@
+Name:                localsearch-spmd2
+Version:             0.0.0.1
+Synopsis:            Local Search benchmark running with an SPMD backend.
+Build-type:          Simple
+Cabal-version:       >=1.10
+
+Executable bench-localsearch-spmd2
+    Default-Language:    Haskell2010
+    main-is:    Main.hs
+    ghc-options: -O2 -threaded -rtsopts 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.SPMD_Example2
+    build-depends: base >= 4.7
+                 , time, array >= 0.4, random
+                 , accelerate-backend-kit >= 0.15.0.0
+                 , accelerate-multidev    >= 0.15.0.0
+                 , accelerate             >= 0.15.0.0
