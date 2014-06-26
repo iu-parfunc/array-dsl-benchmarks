@@ -3,5 +3,4 @@
 set -x 
 set -e
 
-cd nbody 
-make 
+cd nbody; make 
