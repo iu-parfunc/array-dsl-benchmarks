@@ -3,8 +3,8 @@
 set -x 
 set -e
 
-pwd
+dir=pwd
 
 
-cd nbody 
+cd OpenAcc/nbody 
 make 
