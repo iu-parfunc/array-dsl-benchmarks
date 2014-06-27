@@ -140,7 +140,9 @@ int main(int argc, char **argv)
   
   p = (Point*)malloc(size*sizeof(Point)); 
   a = (Point*)malloc(size*sizeof(Point)); 
-
+  
+  /* Intialize Acc before launch of kernel and timint */
+  acc_init();
   
   loadData(fp,size,p); 
 
