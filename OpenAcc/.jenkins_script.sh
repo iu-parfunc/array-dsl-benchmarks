@@ -5,3 +5,5 @@ set -e
 
 cd nbody
 make 
+
+./nbody.exe
