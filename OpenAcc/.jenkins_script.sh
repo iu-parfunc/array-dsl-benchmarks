@@ -6,4 +6,4 @@ set -e
 cd nbody
 make 
 
-./nbody.exe
+PGI_ACC_TIME=1 ./nbody.exe
