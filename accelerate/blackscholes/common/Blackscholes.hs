@@ -25,6 +25,7 @@ riskfree, volatility :: Float
 riskfree   = 0.02
 volatility = 0.30
 
+
 -- Black-Scholes option pricing
 -------------------------------
 
@@ -112,9 +113,10 @@ main = do args <- getArgs
           let AccTiming{compileTime,runTime,copyTime} = times
           putStrLn$ "  All timing: "++ show times
           putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
+#ifndef DONTPRINT       
           putStrLn$ "JITTIME: "++ show compileTime
           putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
-
+#endif
           -- let vec = Bkend.run $ run_acc ()
 
           -- t1 <- getCurrentTime
