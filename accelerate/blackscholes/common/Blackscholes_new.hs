@@ -22,9 +22,10 @@ import Control.Exception (evaluate)
 import System.Environment (getArgs)
 
 riskfree, volatility :: Float
+topLoop :: Int
 riskfree   = 0.02
 volatility = 0.30
-topLoop    = 1000 :: Int
+topLoop    = 1000 -- how many pointless iterations to do
 
 -- Black-Scholes option pricing
 -------------------------------
@@ -48,7 +49,6 @@ blackscholesAcc :: Acc (Acc.Array DIM2 (Float, Float, Float)) ->
                    Acc (Acc.Array DIM2 (Float, Float))
 blackscholesAcc xs = mat
   where mat = Acc.map go xs
-        row mat = Acc.slice mat (constant (Z :. (0::Int) :. All))
         go x = let (price, strike, years) = Acc.unlift x
                    r       = Acc.constant riskfree
                    v       = Acc.constant volatility
