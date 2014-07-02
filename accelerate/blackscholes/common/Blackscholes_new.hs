@@ -22,9 +22,10 @@ import Control.Exception (evaluate)
 import System.Environment (getArgs)
 
 riskfree, volatility :: Float
+topLoop :: Int
 riskfree   = 0.02
 volatility = 0.30
-
+topLoop    = 1000 -- how many pointless iterations to do
 
 -- Black-Scholes option pricing
 -------------------------------
@@ -44,23 +45,22 @@ cnd' d =
   rsqrt2pi * exp (-0.5*d*d) * poly k
 
 
-blackscholesAcc :: Vector (Float, Float, Float) -> Acc (Vector (Float, Float))
-blackscholesAcc xs = Acc.map go (Acc.use xs)
-  where
-  go x =
-    let (price, strike, years) = Acc.unlift x
-        r       = Acc.constant riskfree
-        v       = Acc.constant volatility
-        v_sqrtT = v * sqrt years
-        d1      = (log (price / strike) + (r + 0.5 * v * v) * years) / v_sqrtT
-        d2      = d1 - v_sqrtT
-        cnd d   = let c = cnd' d in d >* 0 ? (1.0 - c, c)
-        cndD1   = cnd d1
-        cndD2   = cnd d2
-        x_expRT = strike * exp (-r * years)
-    in
-    Acc.lift ( price * cndD1 - x_expRT * cndD2
-             , x_expRT * (1.0 - cndD2) - price * (1.0 - cndD1))
+blackscholesAcc :: Acc (Acc.Array DIM2 (Float, Float, Float)) -> 
+                   Acc (Acc.Array DIM2 (Float, Float))
+blackscholesAcc xs = mat
+  where mat = Acc.map go xs
+        go x = let (price, strike, years) = Acc.unlift x
+                   r       = Acc.constant riskfree
+                   v       = Acc.constant volatility
+                   v_sqrtT = v * sqrt years
+                   d1      = (log (price / strike) + (r + 0.5 * v * v) * years) / v_sqrtT
+                   d2      = d1 - v_sqrtT
+                   cnd d   = let c = cnd' d in d >* 0 ? (1.0 - c, c)
+                   cndD1   = cnd d1
+                   cndD2   = cnd d2
+                   x_expRT = strike * exp (-r * years)
+              in Acc.lift ( price * cndD1 - x_expRT * cndD2
+                 , x_expRT * (1.0 - cndD2) - price * (1.0 - cndD1))
 
 
 blackscholesRef :: IArray.Array Int (Float,Float,Float) -> IArray.Array Int (Float,Float)
@@ -84,16 +84,17 @@ blackscholesRef xs = listArray (bounds xs) [ go x | x <- elems xs ]
 -- Main
 -- ----
 
-run :: Int -> IO (() -> IArray.Array Int (Float,Float), () -> Acc (Vector (Float,Float)))
+run :: Int -> IO (() -> IArray.Array Int (Float,Float), () -> Acc (Acc.Array DIM2 (Float,Float)))
 run n = withSystemRandom $ \gen -> do
   v_sp <- randomUArrayR (5,30)    gen n
   v_os <- randomUArrayR (1,100)   gen n
   v_oy <- randomUArrayR (0.25,10) gen n
 
   let v_psy = listArray (0,n-1) $ P.zip3 (elems v_sp) (elems v_os) (elems v_oy)
-      a_psy = Acc.fromIArray v_psy
+      a_psy = Acc.use $ Acc.fromIArray v_psy :: Acc (Acc.Array DIM1 (Float, Float, Float))
+      r_psy = Acc.replicate (constant (Z :. topLoop :. All)) a_psy :: Acc (Acc.Array DIM2 (Float, Float, Float))
   --
-  return (run_ref v_psy, run_acc a_psy)
+  return (run_ref v_psy, run_acc r_psy)
   where
     {-# NOINLINE run_ref #-}
     run_ref psy () = blackscholesRef psy
@@ -111,11 +112,11 @@ main = do args <- getArgs
           (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (run_acc ())
           tEnd   <- getCurrentTime
           let AccTiming{compileTime,runTime,copyTime} = times
-          putStrLn$ "  All timing: "++ show times
-          putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
+          putStrLn$ "  All timing: "P.++ show times
+          putStrLn$ "  Total time for runTimed "P.++ show (diffUTCTime tEnd tBegin)
 #ifndef DONTPRINT       
-          putStrLn$ "JITTIME: "++ show compileTime
-          putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
+          putStrLn$ "JITTIME: "P.++ show compileTime
+          putStrLn$ "SELFTIMED: "P.++ show (runTime + copyTime)
 #endif
           -- let vec = Bkend.run $ run_acc ()
 
