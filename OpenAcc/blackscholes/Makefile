@@ -11,3 +11,5 @@ run: nbody.exe
 
 runopt: nbody.exe 
 	PGI_ACC_TIME=1 optirun ./blackscholes.exe
+
+clean:
