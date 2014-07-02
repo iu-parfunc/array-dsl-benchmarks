@@ -70,19 +70,25 @@ main = do
 
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
+  ------ Traditional benchmarks ------
   allNBodies 
-  ++ allScaleFlops
-  ++ allScaleFlops2
   ++ allBlackscholes
 
-  ++ allMultiNBodies
-  ++ allMultiBlackscholes
+  ------ Multi-device benchmarks ------
+  ++ allMultiNBodies        
+  ++ allMultiBlackscholes   
+
+  ------ Micro-benchmarks ------
+  ++ allScaleFlops
+  ++ allScaleFlops2
+
  where 
   -- Argument variation:
   ----------------------------------------
 
-  -- nbody_args = [10000, 15000, 25000]
-  nbody_args = [1000,2000 .. 66000]
+  -- nbody_args = [10000, 15000, 25000 ]
+  -- nbody_args = [1000,2000 .. 66000] -- FIXME: too many datapoints [2014.07.02]
+  nbody_args = [1000,5000 .. 66000] 
 
   blackscholes_args = [100000, 1000000, 2000000, 10000000]
 
@@ -117,12 +123,14 @@ bls_desktop =
                   concat [ allthree (scaleFlops args) 
                          | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..10]]
                          ]
-
+  -- Create a sequential inner loop which performs a variable amount of arithmetic.
   allScaleFlops2 = concat [ allthree (scaleFlops2 args) 
-                          | sz <- ["1000000", "2000000"]
-                          , args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..13]]
+                          | sz <- ["1000000", "2000000"] -- Vary array size.
+                          , args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..13]] 
+                            -- Vary inner loop trip-count.
                           ]
 
+  -------------------------------------------
   -- Define each benchmark's characteristics:
   -------------------------------------------
 
