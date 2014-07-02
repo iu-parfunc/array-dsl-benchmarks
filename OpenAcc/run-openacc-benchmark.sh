@@ -1,16 +1,23 @@
 #!/bin/bash
 
+DIR=$1
+if [ "$DIR" != "" ]; then 
+  cd $DIR/OpenAcc
+fi
+
 set -x
 set -e
-
-DIR=`dirname $0`
 
 if [ "$CABAL" == "" ]; 
 then CABAL=cabal
 fi
 
-cd $DIR
-$CABAL install --disable-documentation --bindir=. --program-suffix=.exe
+pwd
+CBLOPTS="--disable-documentation"
+
+$CABAL sandbox init
+$CABAL install $CBLOPTS ../HSBencher/hsbencher/ ../HSBencher/hsbencher-fusion/ -j
+$CABAL install $CBLOPTS --bindir=. --program-suffix=.exe
 
 # Fusion table upload
 # ============================================================
