@@ -1,9 +1,8 @@
 
-# This is just a shortcut for those in the habit of typing "make":
+# Perform general setup duties before running any individual
+# (per-language) benchmark suites.
 
-# Build the run_benchmark executable in this directory:
-run_array_dsl_benchmarks.exe: run_benchmark.hs run_benchmark.cabal
-	cabal install -ffusion --bindir=`pwd`  --program-suffix=".exe" -j . ./HSBencher/hsbencher/
+setup:
+	(cd DATA; $(MAKE))
 
 clean:
-	rm -f run_array_dsl_benchmarks.exe

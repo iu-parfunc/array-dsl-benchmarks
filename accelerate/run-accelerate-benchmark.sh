@@ -7,16 +7,18 @@ set -x
 set -e
 
 # The first argument to this script is usually the root directory for the repo.
-if [ "$1" == "" ]; 
-then TOP=`pwd`
-else TOP=$1/accelerate/
+if [ -d "$1" ]; then 
+  HERE=$1/accelerate/
+  shift
+else 
+  HERE=`pwd`
 fi
 pwd
 if [ "$CABAL" == "" ]; 
 then CABAL=cabal
 fi
 
-HSBENCHER_SANDBOX=$TOP/.cabal-sandbox/
+HSBENCHER_SANDBOX=$HERE/.cabal-sandbox/
 ACC=../accelerate_src
 PKGS=" ../HSBencher/hsbencher/ ../HSBencher/hsbencher-fusion/ "
 PKGS="$PKGS $ACC/ $ACC/accelerate-backend-kit/backend-kit/ \
@@ -31,40 +33,39 @@ $CABAL --version
 CBLOPTS="--disable-documentation"
 
 # Individual benchmark directories:
-DIRS="$TOP/array-dsl-benchmarks/ \
-   $TOP/nbody/seq_c \
-   $TOP/nbody/cilk  \
-   $TOP/nbody/cuda  \
-   $TOP/nbody/fission1  \
-   $TOP/nbody/spmd1  \
-   $TOP/nbody/spmd2  \
-   $TOP/nbody_temp/cpugpu \
-   $TOP/blackscholes/seq_c \
-   $TOP/blackscholes/cilk  \
-   $TOP/blackscholes/cuda  \
-   $TOP/blackscholes/fission1  \
-   $TOP/blackscholes/spmd1  \
-   $TOP/blackscholes/spmd2  \
-   $TOP/blackscholes_temp/cpugpu \
-   $TOP/scale_flops/seq_c \
-   $TOP/scale_flops/cilk \
-   $TOP/scale_flops/cuda \
-   $TOP/scale_flops2/seq_c \
-   $TOP/scale_flops2/cilk \
-   $TOP/scale_flops2/cuda \
-   $TOP/reduce/cuda \
+DIRS="$HERE/nbody/seq_c \
+   $HERE/nbody/cilk  \
+   $HERE/nbody/cuda  \
+   $HERE/nbody/fission1  \
+   $HERE/nbody/spmd1  \
+   $HERE/nbody/spmd2  \
+   $HERE/nbody_temp/cpugpu \
+   $HERE/blackscholes/seq_c \
+   $HERE/blackscholes/cilk  \
+   $HERE/blackscholes/cuda  \
+   $HERE/blackscholes/fission1  \
+   $HERE/blackscholes/spmd1  \
+   $HERE/blackscholes/spmd2  \
+   $HERE/blackscholes_temp/cpugpu \
+   $HERE/scale_flops/seq_c \
+   $HERE/scale_flops/cilk \
+   $HERE/scale_flops/cuda \
+   $HERE/scale_flops2/seq_c \
+   $HERE/scale_flops2/cilk \
+   $HERE/scale_flops2/cuda \
+   $HERE/reduce/cuda \
   "
 
-   # $TOP/smvm/seq_c \
-   # $TOP/smvm/cilk  \
-   # $TOP/smvm/cuda  \
-   # $TOP/smvm/fission1  \
-   # $TOP/smvm/spmd1  \
-   # $TOP/smvm/spmd2  \
+   # $HERE/smvm/seq_c \
+   # $HERE/smvm/cilk  \
+   # $HERE/smvm/cuda  \
+   # $HERE/smvm/fission1  \
+   # $HERE/smvm/spmd1  \
+   # $HERE/smvm/spmd2  \
 
-#   $TOP/nbody_temp/2gpu \
+#   $HERE/nbody_temp/2gpu \
 
-# $TOP/scale_flops/cilk $TOP/scale_flops/cuda
+# $HERE/scale_flops/cilk $HERE/scale_flops/cuda
 
 # ------------------------------------------------------------
 # When benchmarking we always use a sandbox
@@ -73,7 +74,7 @@ $CABAL sandbox init
 for dir in $DIRS; do 
   cd $dir
   cabal sandbox init --sandbox=$HSBENCHER_SANDBOX
-  cd $TOP
+  cd $HERE
 done
 
 # (0) Install all package dependencies
