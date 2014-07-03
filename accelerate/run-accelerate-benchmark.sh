@@ -85,6 +85,8 @@ $CABAL sandbox init
 # And we build each individual benchmark in the same sandbox:
 for dir in $DIRS; do 
   cd $dir
+  echo Creating sandbox in $dir 
+  echo Pointing to $HSBENCHER_SANDBOX 
   cabal sandbox init --sandbox=$HSBENCHER_SANDBOX
   cd $HERE
 done
