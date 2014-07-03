@@ -14,22 +14,18 @@ Where mode is 'desktop', 'server', or 'quick'.
 
 module Main where
 
-import qualified Data.Set as S
+import           GHC.Conc           (getNumProcessors)
+import           System.Console.GetOpt
+import           System.Environment (getEnvironment, getArgs, withArgs)
+import           System.IO.Unsafe   (unsafePerformIO)
 
-import GHC.Conc           (getNumProcessors)
-import System.Environment (getEnvironment, getArgs, withArgs)
-import System.IO.Unsafe   (unsafePerformIO)
-import System.Console.GetOpt
-
--- import HSBencher.Types(BenchSpace(..), Benchmark(..), ParamSetting(..), DefaultParamMeaning(..),
---                        -- compileOptsOnly, enumerateBenchSpace, toCompileFlags,
---                        -- makeBuildID, BuildID,
---                        mkBenchmark
---                       )
-import HSBencher (defaultMainWithBechmarks, all_cli_options, fullUsageInfo,
+import HSBencher (defaultMainModifyConfig, all_cli_options, 
                   BenchSpace(..), Benchmark(..), ParamSetting(..), DefaultParamMeaning(..),
-                  mkBenchmark
-                  )
+                  Config(..), SomePlugin(..))
+import HSBencher.Methods.Builtin (makeMethod)
+import HSBencher.Backend.Fusion  (defaultFusionPlugin)
+import HSBencher.Backend.Dribble (defaultDribblePlugin)
+
 
 --------------------------------------------------------------------------------
 -- Main Script
@@ -62,7 +58,15 @@ main = do
     let passthru = nonopts ++ unrecog
     putStrLn$ "  [Note: passing through options to HSBencher]: "++unwords passthru
     withArgs passthru $ 
-     defaultMainWithBechmarks bls_desktop
+--     defaultMainWithBechmarks bls_desktop
+     defaultMainModifyConfig $ \ conf ->
+       conf{ benchlist  = bls_desktop
+           , runTimeOut = Just 1000 -- Erk... need a separate compile timeout.
+           , buildMethods = [makeMethod]
+           , plugIns   = [ SomePlugin defaultFusionPlugin,
+                           SomePlugin defaultDribblePlugin ]
+           }
+
     
 --------------------------------------------------------------------------------
 -- Here are the actual benchmarks:
@@ -87,22 +91,25 @@ bls_desktop =
   -- Argument variation:
   ----------------------------------------
 
+  nbody_args :: [Integer]
   -- nbody_args = [10000, 15000, 25000 ]
   -- nbody_args = [1000,2000 .. 66000] -- FIXME: too many datapoints [2014.07.02]
   nbody_args = [1000,5000 .. 66000] 
 
-  blackscholes_args = [100000, 1000000, 2000000, 10000000]
+  -- [2014.07.03] Reduce these when the 1000X work increase hits:
+  blackscholes_args :: [Integer]
+  blackscholes_args = map (* 1000) [100, 1000, 2000, 10000]
 
   -- Building/aggregating all variants:
   ----------------------------------------
 
   root = "./"
 
-  allReduces = [ baseline { cmdargs= [show $ round $  1000000 * sz, mode],
+  allReduces = [ baseline { cmdargs= [show (round (1000000 * sz)::Integer), mode],
                             configs= And[ Set (Variant "cuda") (RuntimeEnv "IGNORE_THIS" "")],
                             target= root++"reduce/cuda/reduce-cuda.cabal",
                             progname= Just "accelerate-reduce-microbench" }
-               | sz <- (0.25:0.5:[1..16]) 
+               | sz <- (0.25 : 0.5 : [1..16]) :: [Double]
                , mode <- ["awhile", "loop"]]
 
   allBlackscholes = concat [ allthree (blackscholes (show arg))
@@ -131,12 +138,14 @@ bls_desktop =
   -- Vary the size of the big arithmetic expression generated:
   allScaleFlops = let sz = "2000000" in 
                   concat [ allthree (scaleFlops args) 
-                         | args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..10]]
+                         | args <- ["0",sz] : [ [show (2^n::Integer), sz] 
+                                              | n <- [0..10::Integer]]
                          ]
   -- Create a sequential inner loop which performs a variable amount of arithmetic.
   allScaleFlops2 = concat [ allthree (scaleFlops2 args) 
                           | sz <- ["1000000", "2000000"] -- Vary array size.
-                          , args <- ["0",sz] : [ [show (2^n), sz] | n <- [0..13]] 
+                          , args <- ["0",sz] : [ [show (2^n::Integer), sz] 
+                                               | n <- [0..13::Integer]] 
                             -- Vary inner loop trip-count.
                           ]
 
@@ -159,12 +168,14 @@ bls_desktop =
                          target= root++"blackscholes", -- Just the root
                          progname= Just "accelerate-blackscholes" }
 
+  scaleFlops :: [String] -> String -> Benchmark DefaultParamMeaning
   scaleFlops args var = 
       baseline { cmdargs=args, 
                  configs= And[ Set (Variant var) (CompileParam "")],
                  target= root++"scale_flops", -- Just the root
                  progname= Just "accelerate-scaleFlops" }
 
+  scaleFlops2 :: [String] -> String -> Benchmark DefaultParamMeaning
   scaleFlops2 args var = 
       baseline { cmdargs=args, 
                  configs= And[ Set (Variant var) (CompileParam "")],
@@ -176,12 +187,12 @@ bls_desktop =
 
   -- Run with all of the backends:
   allthree fn = 
-    let root = target (fn "seqC") in 
-    [ (fn "seqC") { target= root++"/seq_c/" }
-    , (fn "cuda") { target= root++"/cuda/"  }
-    , varyCilkThreads threadSelection $ (fn "cilk") { target= root++"/cilk/"  }
-    , varyFission threadSelection $ (fn "fission1") { target= root++"/fission1/" }
-    , varyFission threadSelection $ (fn "spmd2")    { target= root++"/spmd2/" }
+    let dirroot = target (fn "seqC") in 
+    [ (fn "seqC") { target= dirroot++"/seq_c/" }
+    , (fn "cuda") { target= dirroot++"/cuda/"  }
+    , varyCilkThreads threadSelection $ (fn "cilk") { target= dirroot++"/cilk/"  }
+    , varyFission threadSelection $ (fn "fission1") { target= dirroot++"/fission1/" }
+    , varyFission threadSelection $ (fn "spmd2")    { target= dirroot++"/spmd2/" }
     ]
 
   baseline = Benchmark { cmdargs=[], configs= And[], benchTimeOut=Just defaultTimeout, target="", progname=Nothing }
@@ -226,4 +237,3 @@ varyFission settings bench@Benchmark{configs} =
   bench { configs= And [configs, 
                        Or [ Set (Threads n) (RuntimeEnv "ACC_FISSION_FACTOR" (show n))
                           | n <- settings ]] }
-
