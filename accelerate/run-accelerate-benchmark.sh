@@ -6,6 +6,9 @@
 set -x 
 set -e
 
+# Adding this for Delta on Futuregrid, but it should be harmless elsewhere.
+module add cuda/5.5 || echo "Ok that that didnt work."
+
 # The first argument to this script is usually the root directory for the repo.
 if [ -d "$1" ]; then 
   HERE=$1/accelerate/
