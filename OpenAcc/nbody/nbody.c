@@ -132,7 +132,7 @@ int main(int argc, char **argv)
   printf("Running OpenAcc nbody benchmark on %d bodies...\n",size);
   
 
-  fp = fopen("data.dat","r");
+  fp = fopen("../../DATA/uniform.3dpts","r");
   
   if (fp == NULL)  
     exit(EXIT_FAILURE);
