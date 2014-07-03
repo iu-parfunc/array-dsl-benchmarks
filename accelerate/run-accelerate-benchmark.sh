@@ -16,7 +16,7 @@ module add cuda/5.5 || echo "Ok that that didnt work."
 
 # The first argument to this script is usually the root directory for the repo.
 if [ -d "$1" ]; then 
-  HERE=$1/accelerate/
+  HERE=$1/accelerate
   shift
 else 
   HERE=`pwd`
@@ -81,6 +81,7 @@ DIRS="$HERE/nbody/seq_c \
 
 # ------------------------------------------------------------
 # When benchmarking we always use a sandbox
+cd $HERE
 $CABAL sandbox init
 # And we build each individual benchmark in the same sandbox:
 for dir in $DIRS; do 
