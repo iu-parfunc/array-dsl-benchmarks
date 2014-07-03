@@ -6,7 +6,7 @@ all:
 keepCUDA: 
 	pgcc -acc -Minline -Minfo=accel -ta=nvidia,keepptx,keepgpu -o blackscholes.exe blackscholes.c
 
-run: nbody.exe  
+run: blackscholes.exe  
 	PGI_ACC_TIME=1 optirun ./blackscholes.exe
 
 runopt: nbody.exe 
