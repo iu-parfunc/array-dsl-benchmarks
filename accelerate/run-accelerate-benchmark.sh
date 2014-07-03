@@ -80,8 +80,7 @@ done
 # (0) Install all package dependencies
 # ------------------------------------------------------------
 
-# [2014.07.02] Temporarily constraining to an older cuda package to run on machines
-$CABAL install $CBLOPTS $PKGS 'cuda < 0.6' -j
+$CABAL install $CBLOPTS $PKGS -j
 
 # (1) Build the benchmark harness
 # ------------------------------------------------------------
