@@ -6,6 +6,11 @@
 set -x 
 set -e
 
+# module add intel seems to break on fake_bigred2 
+# moving it here, so it takes place after the pbs thing
+module add intel
+which icc || echo ok
+
 # Adding this for Delta on Futuregrid, but it should be harmless elsewhere.
 module add cuda/5.5 || echo "Ok that that didnt work."
 
