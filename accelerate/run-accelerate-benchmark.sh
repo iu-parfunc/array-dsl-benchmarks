@@ -21,18 +21,17 @@ if [ "$CABAL" == "" ];
 then CABAL=cabal
 fi
 
-echo JS 
-echo $1
-
 
 HSBENCHER_SANDBOX=$HERE/.cabal-sandbox/
 ACC=../accelerate_src
 PKGS=" ../HSBencher/hsbencher/ ../HSBencher/hsbencher-fusion/ "
 PKGS="$PKGS $ACC/ $ACC/accelerate-backend-kit/backend-kit/ \
                   $ACC/accelerate-backend-kit/icc-opencl/  \
-                  $ACC/accelerate-multidev \
-                  $ACC/accelerate-cuda/    \
+                  $ACC/accelerate-multidev
                   "
+if [ $2 == "nbody/cuda" ]; 
+then PKGS="$PKGS $ACC/accelerate-cuda/ "
+fi 
 #                  $ACC/accelerate-backend-kit/simple-cuda
 
 which $CABAL
