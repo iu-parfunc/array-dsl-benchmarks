@@ -1,10 +1,12 @@
 #!/bin/bash
 
+set -x
+
 if [ -d "$1" ]; then 
   cd $1/OpenAcc
   shift
 fi
-set -x
+
 set -e
 pwd
 if [ "$CABAL" == "" ]; 
