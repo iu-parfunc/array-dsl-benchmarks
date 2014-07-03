@@ -96,9 +96,11 @@ bls_desktop =
   -- Building/aggregating all variants:
   ----------------------------------------
 
+  root = "./"
+
   allReduces = [ baseline { cmdargs= [show $ round $  1000000 * sz, mode],
                             configs= And[ Set (Variant "cuda") (RuntimeEnv "IGNORE_THIS" "")],
-                            target= "./accelerate/reduce/cuda/reduce-cuda.cabal",
+                            target= root++"reduce/cuda/reduce-cuda.cabal",
                             progname= Just "accelerate-reduce-microbench" }
                | sz <- (0.25:0.5:[1..16]) 
                , mode <- ["awhile", "loop"]]
@@ -110,7 +112,7 @@ bls_desktop =
        [ baseline { cmdargs=[ show arg ], 
                     configs= And[ Set (Variant "cpugpu")
                                    (RuntimeEnv "IGNORE_THIS" "")],
-                    target= "./accelerate/blackscholes_temp/cpugpu",
+                    target= root++"blackscholes_temp/cpugpu",
                     progname= Just "accelerate-blackscholes-cpugpu" }
        | arg <- blackscholes_args ]
 
@@ -121,8 +123,8 @@ bls_desktop =
        [ baseline { cmdargs=[ show arg ], 
                     configs= And[ Set (Variant "cpugpu")
                                   (RuntimeEnv "ACCELERATE_INPUT_FILE"
-                                   "./accelerate/nbody_temp/common/uniform.3dpts")],
-                    target= "./accelerate/nbody_temp/cpugpu",
+                                   (root++"nbody_temp/common/uniform.3dpts"))],
+                    target= root++"nbody_temp/cpugpu",
                     progname= Just "accelerate-nbody-cpugpu" }
        | arg <- nbody_args ]
                 
@@ -146,27 +148,27 @@ bls_desktop =
               baseline { cmdargs=[size], 
                          configs= And[ Set (Variant var)
                                         (RuntimeEnv "ACCELERATE_INPUT_FILE"
-                                         "./accelerate/nbody/makefile_based/uniform.3dpts")],
-                         target= "./accelerate/nbody", -- Just the root
+                                         (root++"nbody/makefile_based/uniform.3dpts"))],
+                         target= root++"nbody", -- Just the root
                          progname= Just "accelerate-nbody-float" }
 
   blackscholes size var = 
               baseline { cmdargs=[size], 
                          configs= And[ Set (Variant var)
                                         (RuntimeEnv "IGNORE_THIS" "")],
-                         target= "./accelerate/blackscholes", -- Just the root
+                         target= root++"blackscholes", -- Just the root
                          progname= Just "accelerate-blackscholes" }
 
   scaleFlops args var = 
       baseline { cmdargs=args, 
                  configs= And[ Set (Variant var) (CompileParam "")],
-                 target= "./accelerate/scale_flops", -- Just the root
+                 target= root++"scale_flops", -- Just the root
                  progname= Just "accelerate-scaleFlops" }
 
   scaleFlops2 args var = 
       baseline { cmdargs=args, 
                  configs= And[ Set (Variant var) (CompileParam "")],
-                 target= "./accelerate/scale_flops2", -- Just the root
+                 target= root++"scale_flops2", -- Just the root
                  progname= Just "accelerate-scaleFlops2" }
 
   -- Helpers
