@@ -78,6 +78,7 @@ void calcAccels(int n,
   
  /* get accel from every combination */ 
 #pragma acc parallel loop
+#pragma omp parallel for
   for (int i = 0; i < n; ++i) { 
     Point p1 = bodies[i]; 
   
