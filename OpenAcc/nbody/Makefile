@@ -1,6 +1,9 @@
 
 
-all: 
+all: nbody.exe
+
+
+nbody.exe:
 	pgcc -acc -Minline -Minfo=accel -ta=nvidia -o nbody.exe nbody.c
 
 keepCUDA: 
