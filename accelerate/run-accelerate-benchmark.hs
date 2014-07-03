@@ -200,8 +200,9 @@ bls_desktop =
 
 
 -- Use 50 seconds as the default timeout:
+-- JS: tweaks this temporarily to 150
 defaultTimeout :: Double
-defaultTimeout = 50
+defaultTimeout = 150
 
 --------------------------------------------------------------------------------
 
