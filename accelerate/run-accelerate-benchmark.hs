@@ -62,7 +62,7 @@ main = do
      defaultMainModifyConfig $ \ conf ->
        conf{ benchlist  = bls_desktop
            , runTimeOut = Just 1000 -- Erk... need a separate compile timeout.
-           , buildMethods = [makeMethod]
+--            , buildMethods = [makeMethod]
            , plugIns   = [ SomePlugin defaultFusionPlugin,
                            SomePlugin defaultDribblePlugin ]
            }
