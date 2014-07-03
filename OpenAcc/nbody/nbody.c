@@ -77,7 +77,7 @@ void calcAccels(int n,
                 Point * restrict accels) {
   
  /* get accel from every combination */ 
-#pragma acc parallel loop
+#pragma acc kernels loop
 #pragma omp parallel for
   for (int i = 0; i < n; ++i) { 
     Point p1 = bodies[i]; 
@@ -86,7 +86,9 @@ void calcAccels(int n,
     double ty = 0; 
     double tz = 0; 
     Point r; 
-  
+
+// Uncommenting this pragma exposes more parallelism, but in my test it actually slows things down.  
+//#pragma omp parallel for reduction(+:tx,ty,tz)
     for (int j = 0; j < n; ++j) { 
   
       r = accel(bodies[i], bodies[j]); 
