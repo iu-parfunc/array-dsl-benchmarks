@@ -21,6 +21,10 @@ if [ "$CABAL" == "" ];
 then CABAL=cabal
 fi
 
+echo JS 
+echo $1
+
+
 HSBENCHER_SANDBOX=$HERE/.cabal-sandbox/
 ACC=../accelerate_src
 PKGS=" ../HSBencher/hsbencher/ ../HSBencher/hsbencher-fusion/ "
