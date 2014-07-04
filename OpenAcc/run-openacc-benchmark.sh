@@ -24,7 +24,7 @@ CBLOPTS="--disable-documentation"
 # ============================================================
 
 $CABAL sandbox init
-$CABAL install $CBLOPTS ../HSBencher/hsbencher/ ../HSBencher/hsbencher-fusion/ -j
+$CABAL install $CBLOPTS ../HSBencher/hsbencher/ ../HSBencher/hsbencher-fusion/ ../HSBencher/hgdata -j
 $CABAL install $CBLOPTS --bindir=. --program-suffix=.exe
 
 # (2) Run benchmarks
