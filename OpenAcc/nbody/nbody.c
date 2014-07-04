@@ -78,6 +78,7 @@ void calcAccels(int n,
   
  /* get accel from every combination */ 
 #pragma acc parallel loop
+#pragma omp parallel for
   for (int i = 0; i < n; ++i) { 
     Point p1 = bodies[i]; 
   
@@ -132,7 +133,7 @@ int main(int argc, char **argv)
   printf("Running OpenAcc nbody benchmark on %d bodies...\n",size);
   
 
-  fp = fopen("data.dat","r");
+  fp = fopen("../../DATA/uniform.3dpts","r");
   
   if (fp == NULL)  
     exit(EXIT_FAILURE);

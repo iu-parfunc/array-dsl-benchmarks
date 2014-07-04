@@ -62,7 +62,7 @@ main = do
      defaultMainModifyConfig $ \ conf ->
        conf{ benchlist  = bls_desktop
            , runTimeOut = Just 1000 -- Erk... need a separate compile timeout.
-           , buildMethods = [makeMethod]
+--            , buildMethods = [makeMethod]
            , plugIns   = [ SomePlugin defaultFusionPlugin,
                            SomePlugin defaultDribblePlugin ]
            }
@@ -200,8 +200,9 @@ bls_desktop =
 
 
 -- Use 50 seconds as the default timeout:
+-- JS: tweaks this temporarily to 150
 defaultTimeout :: Double
-defaultTimeout = 50
+defaultTimeout = 150
 
 --------------------------------------------------------------------------------
 

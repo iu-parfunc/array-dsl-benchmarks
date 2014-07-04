@@ -6,12 +6,17 @@
 set -x 
 set -e
 
+# module add intel seems to break on fake_bigred2 
+# moving it here, so it takes place after the pbs thing
+module add intel
+which icc || echo ok
+
 # Adding this for Delta on Futuregrid, but it should be harmless elsewhere.
 module add cuda/5.5 || echo "Ok that that didnt work."
 
 # The first argument to this script is usually the root directory for the repo.
 if [ -d "$1" ]; then 
-  HERE=$1/accelerate/
+  HERE=$1/accelerate
   shift
 else 
   HERE=`pwd`
@@ -21,15 +26,19 @@ if [ "$CABAL" == "" ];
 then CABAL=cabal
 fi
 
+
 HSBENCHER_SANDBOX=$HERE/.cabal-sandbox/
 ACC=../accelerate_src
 PKGS=" ../HSBencher/hsbencher/ ../HSBencher/hsbencher-fusion/ "
 PKGS="$PKGS $ACC/ $ACC/accelerate-backend-kit/backend-kit/ \
                   $ACC/accelerate-backend-kit/icc-opencl/  \
-                  $ACC/accelerate-multidev \
-                  $ACC/accelerate-cuda/    \
-                  "
-#                  $ACC/accelerate-backend-kit/simple-cuda
+                  $ACC/accelerate-multidev/ \
+                  $ACC/accelerate-cuda/ "
+                  
+# if [ $2 == "nbody/cuda" ]; 
+# then PKGS="$PKGS 
+# fi 
+# #                  $ACC/accelerate-backend-kit/simple-cuda
 
 which $CABAL
 $CABAL --version
@@ -72,10 +81,13 @@ DIRS="$HERE/nbody/seq_c \
 
 # ------------------------------------------------------------
 # When benchmarking we always use a sandbox
+cd $HERE
 $CABAL sandbox init
 # And we build each individual benchmark in the same sandbox:
 for dir in $DIRS; do 
   cd $dir
+  echo Creating sandbox in $dir 
+  echo Pointing to $HSBENCHER_SANDBOX 
   cabal sandbox init --sandbox=$HSBENCHER_SANDBOX
   cd $HERE
 done
