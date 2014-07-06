@@ -75,8 +75,8 @@ main = do
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
   ------ Traditional benchmarks ------
-  allNBodies 
-  ++ allBlackscholes
+  allBlackscholes
+  ++ allNBodies 
 
   ------ Multi-device benchmarks ------
   ++ allMultiNBodies        
@@ -112,7 +112,7 @@ bls_desktop =
                | sz <- (0.25 : 0.5 : [1..16]) :: [Double]
                , mode <- ["awhile", "loop"]]
 
-  allBlackscholes = concat [ allthree (blackscholes (show arg))
+  allBlackscholes = concat [ allvariants (blackscholes (show arg))
                            | arg <- blackscholes_args ]
 
   allMultiBlackscholes = 
@@ -123,7 +123,7 @@ bls_desktop =
                     progname= Just "accelerate-blackscholes-cpugpu" }
        | arg <- blackscholes_args ]
 
-  allNBodies = concat [ allthree (nbody (show arg)) 
+  allNBodies = concat [ allvariants (nbody (show arg)) 
                       | arg <- nbody_args ]
 
   allMultiNBodies = 
@@ -137,12 +137,12 @@ bls_desktop =
                 
   -- Vary the size of the big arithmetic expression generated:
   allScaleFlops = let sz = "2000000" in 
-                  concat [ allthree (scaleFlops args) 
+                  concat [ allvariants (scaleFlops args) 
                          | args <- ["0",sz] : [ [show (2^n::Integer), sz] 
                                               | n <- [0..10::Integer]]
                          ]
   -- Create a sequential inner loop which performs a variable amount of arithmetic.
-  allScaleFlops2 = concat [ allthree (scaleFlops2 args) 
+  allScaleFlops2 = concat [ allvariants (scaleFlops2 args) 
                           | sz <- ["1000000", "2000000"] -- Vary array size.
                           , args <- ["0",sz] : [ [show (2^n::Integer), sz] 
                                                | n <- [0..13::Integer]] 
@@ -186,10 +186,12 @@ bls_desktop =
   ----------------------------------------
 
   -- Run with all of the backends:
-  allthree fn = 
+  allvariants fn = 
     let dirroot = target (fn "seqC") in 
     [ (fn "seqC") { target= dirroot++"/seq_c/" }
     , (fn "cuda") { target= dirroot++"/cuda/"  }
+    , (fn "cpugpu") { target= dirroot++"/cpugpu/"  }
+    , (fn "2gpu")   { target= dirroot++"/2gpu/"  }
     , varyCilkThreads threadSelection $ (fn "cilk") { target= dirroot++"/cilk/"  }
     , varyFission threadSelection $ (fn "fission1") { target= dirroot++"/fission1/" }
     , varyFission threadSelection $ (fn "spmd2")    { target= dirroot++"/spmd2/" }
