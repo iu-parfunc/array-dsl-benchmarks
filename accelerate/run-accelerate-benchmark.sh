@@ -51,14 +51,14 @@ DIRS="$HERE/nbody/seq_c \
    $HERE/nbody/fission1  \
    $HERE/nbody/spmd1  \
    $HERE/nbody/spmd2  \
-   $HERE/nbody_temp/cpugpu \
    $HERE/blackscholes/seq_c \
    $HERE/blackscholes/cilk  \
    $HERE/blackscholes/cuda  \
    $HERE/blackscholes/fission1  \
    $HERE/blackscholes/spmd1  \
    $HERE/blackscholes/spmd2  \
-   $HERE/blackscholes_temp/cpugpu \
+   $HERE/blackscholes/cpugpu \
+   $HERE/blackscholes/2gpu   \
    $HERE/scale_flops/seq_c \
    $HERE/scale_flops/cilk \
    $HERE/scale_flops/cuda \
@@ -67,6 +67,10 @@ DIRS="$HERE/nbody/seq_c \
    $HERE/scale_flops2/cuda \
    $HERE/reduce/cuda \
   "
+
+# Retired:
+#   $HERE/nbody_temp/cpugpu \
+#   $HERE/blackscholes_temp/cpugpu \
 
    # $HERE/smvm/seq_c \
    # $HERE/smvm/cilk  \
