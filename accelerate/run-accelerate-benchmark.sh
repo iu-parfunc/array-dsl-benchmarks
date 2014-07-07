@@ -33,7 +33,7 @@ PKGS=" ../HSBencher/hsbencher/ ../HSBencher/hsbencher-fusion/ ../HSBencher/hgdat
 PKGS="$PKGS $ACC/ $ACC/accelerate-backend-kit/backend-kit/ \
                   $ACC/accelerate-backend-kit/icc-opencl/  \
                   $ACC/accelerate-multidev/ \
-                  $ACC/accelerate-cuda/ "
+                  $ACC/accelerate-cuda/  "
                   
 # if [ $2 == "nbody/cuda" ]; 
 # then PKGS="$PKGS 
@@ -95,7 +95,9 @@ done
 # (0) Install all package dependencies
 # ------------------------------------------------------------
 
-$CABAL install $CBLOPTS $PKGS -j --force-reinstalls
+# The machines we're measuring on currently have CUDA 5.5 and we're
+# seeing problems with the cuda-0.6 haskell library [2014.07.06]: 
+$CABAL install $CBLOPTS $PKGS -j --force-reinstalls --constraint=cuda<0.6
 
 # (1) Build the benchmark harness itself
 # ------------------------------------------------------------
