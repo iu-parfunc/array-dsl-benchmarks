@@ -18,7 +18,7 @@ import qualified ACCBACKEND as Bkend
 import Control.Exception (evaluate)
 import Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..))
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
-import Foreign.CUDA.Driver (initialise)
+-- import Foreign.CUDA.Driver (initialise)
 import System.Environment (getArgs)
 
 riskfree, volatility :: Float
@@ -108,8 +108,8 @@ main = do args <- getArgs
                             [sz] -> read sz
           putStrLn$"Blackscholes running on input size: "++show inputSize
           (_,run_acc) <- run inputSize -- 0000
-          initialise []
-          putStrLn$"CUDA initialized."
+          -- initialise []
+          -- putStrLn$"CUDA initialized."
 
           tBegin <- getCurrentTime
           (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (run_acc ())
