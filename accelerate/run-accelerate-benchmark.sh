@@ -95,9 +95,9 @@ done
 # (0) Install all package dependencies
 # ------------------------------------------------------------
 
-$CABAL install $CBLOPTS $PKGS -j
+$CABAL install $CBLOPTS $PKGS -j --force-reinstalls
 
-# (1) Build the benchmark harness
+# (1) Build the benchmark harness itself
 # ------------------------------------------------------------
 
 $CABAL install $CBLOPTS --bindir=. --program-suffix=.exe
