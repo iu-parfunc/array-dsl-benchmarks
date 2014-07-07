@@ -111,11 +111,11 @@ main = do args <- getArgs
           (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (run_acc ())
           tEnd   <- getCurrentTime
           let AccTiming{compileTime,runTime,copyTime} = times
-          putStrLn$ "  All timing: "++ show times
-          putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
+          putStrLn$ "  All timing: " P.++ show times
+          putStrLn$ "  Total time for runTimed " P.++ show (diffUTCTime tEnd tBegin)
 #ifndef DONTPRINT       
-          putStrLn$ "JITTIME: "++ show compileTime
-          putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
+          putStrLn$ "JITTIME: " P.++ show compileTime
+          putStrLn$ "SELFTIMED: " P.++ show (runTime + copyTime)
 #endif
           -- let vec = Bkend.run $ run_acc ()
 
