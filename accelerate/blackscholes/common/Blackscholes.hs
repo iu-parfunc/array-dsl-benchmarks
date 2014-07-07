@@ -19,8 +19,12 @@ import Control.Exception (evaluate)
 import Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..), SimpleBackend(..))
 import Data.Array.Accelerate.BackendKit.CompilerPipeline (phase0, phase1)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
--- import Foreign.CUDA.Driver (initialise)
 import System.Environment (getArgs)
+
+-- Temp hack: 
+#ifdef EXTRAINITCUDA
+import Foreign.CUDA.Driver (initialise)
+#endif
 
 riskfree, volatility :: Float
 topLoop :: Int
@@ -109,8 +113,10 @@ main = do args <- getArgs
                             [sz] -> read sz
           putStrLn$"Blackscholes running on input size: "++show inputSize
           (_,run_acc) <- run inputSize -- 0000
-          -- initialise []
-          -- putStrLn$"CUDA initialized."
+#ifdef EXTRAINITCUDA
+          initialise []
+          putStrLn$"CUDA initialized - this is a hack to work around an apparent accelerate-cuda bug."
+#endif
 
           let simpl = phase1 $ phase0 $ run_acc ()
           tBegin <- getCurrentTime
