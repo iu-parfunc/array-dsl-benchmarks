@@ -1,0 +1,18 @@
+Name:                nbody-fission2
+Version:             0.0.0.1
+Synopsis:            NBody benchmark running with CUDA backend + fissioning.
+Build-type:          Custom
+Cabal-version:       >=1.10
+
+Executable bench-nbody-fission2
+    Default-Language:    Haskell2010
+    main-is:    Main.hs
+    hs-source-dirs: ../makefile_based
+    ghc-options: -O2 -threaded -rtsopts 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.FissionCUDA
+    build-depends: base >= 4.7
+                 , bytestring >= 0.10, time, array >= 0.4
+                 , bytestring-lexing >= 0.4
+                 , accelerate-backend-kit >= 0.15.0.0
+                 , accelerate-multidev    >= 0.15.0.0
+                 , accelerate             >= 0.15.0.0
