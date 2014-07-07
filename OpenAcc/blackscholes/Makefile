@@ -9,7 +9,7 @@ keepCUDA:
 run: blackscholes.exe  
 	PGI_ACC_TIME=1 optirun ./blackscholes.exe
 
-runopt: nbody.exe 
+runopt: blackscholes.exe 
 	PGI_ACC_TIME=1 optirun ./blackscholes.exe
 
 clean:
