@@ -16,7 +16,8 @@ import qualified ACCBACKEND as Bkend
 #endif
 
 import Control.Exception (evaluate)
-import Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..))
+import Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..), SimpleBackend(..))
+import Data.Array.Accelerate.BackendKit.CompilerPipeline (phase0, phase1)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 -- import Foreign.CUDA.Driver (initialise)
 import System.Environment (getArgs)
@@ -111,16 +112,28 @@ main = do args <- getArgs
           -- initialise []
           -- putStrLn$"CUDA initialized."
 
+          let simpl = phase1 $ phase0 $ run_acc ()
           tBegin <- getCurrentTime
-          (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (run_acc ())
+#ifndef NOSIMPLE
+          rmts <- simpleRunRaw Bkend.defaultBackend Nothing simpl Nothing
+          -- mapM_ simpleWaitRemote rmts
+          mapM_ (simpleCopyToHost Bkend.defaultBackend) rmts
           tEnd   <- getCurrentTime
+          putStrLn$ "Finished executing through SimpleBackend. "
+#else
+          (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (run_acc ())
           let AccTiming{compileTime,runTime,copyTime} = times
           putStrLn$ "  All timing: "P.++ show times
-          putStrLn$ "  Total time for runTimed "P.++ show (diffUTCTime tEnd tBegin)
-#ifndef DONTPRINT       
+#  ifndef DONTPRINT       
           putStrLn$ "JITTIME: "P.++ show compileTime
           putStrLn$ "SELFTIMED: "P.++ show (runTime + copyTime)
+#  endif
+          tEnd   <- getCurrentTime
 #endif
+
+
+          putStrLn$ "  Total time: "P.++ show (diffUTCTime tEnd tBegin)
+
           -- let vec = Bkend.run $ run_acc ()
 
           -- t1 <- getCurrentTime
