@@ -5,7 +5,7 @@ Cabal-version:       >=1.10
 
 Executable bench-blackscholes-seq-c
     Default-Language:    Haskell2010
-    main-is:    Blackscholes.hs
+    main-is:    Blackscholes_new.hs
     hs-source-dirs: ../common/ ../../common    
     ghc-options: -O2 -threaded -rtsopts 
     cpp-options: -DACCBACKEND=Data.Array.Accelerate.C
