@@ -98,6 +98,8 @@ done
 
 $CABAL sandbox hc-pkg list
 
+find -name ".genC_*" | xargs rm -f 
+
 # (0) Install all package dependencies
 # ------------------------------------------------------------
 
