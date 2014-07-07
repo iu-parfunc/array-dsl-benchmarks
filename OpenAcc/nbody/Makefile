@@ -1,4 +1,4 @@
-NUM_BODIES = 25000
+NUM_BODIES?=25000
 
 all: nbody.exe nbody-omp.exe
 
