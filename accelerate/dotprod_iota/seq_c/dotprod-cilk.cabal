@@ -1,0 +1,18 @@
+Name:                dotprod-seq-c
+Version:             0.0.0.1
+Build-type:          Simple
+Cabal-version:       >=1.10
+
+Executable bench-dotprod-seq-c
+    Default-Language:    Haskell2010
+    main-is:    Dotprod_iota.hs
+    hs-source-dirs: ../common/ ../../common    
+    ghc-options: -O2 -threaded -rtsopts 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.C
+    build-depends: base >= 4.6
+                 , bytestring >= 0.10, time, array >= 0.4
+                 , bytestring-lexing >= 0.4
+                 , accelerate-backend-kit >= 0.13.0.99
+                 , accelerate-icc-opencl  >= 0.13.0.99
+                 , accelerate             >= 0.13.0.99
+                 , mwc-random, vector     >= 0.10
