@@ -1,10 +1,10 @@
-Name:                nbody-2gpu
+Name:                nbody-cpugpu
 Version:             0.0.0.1
 Synopsis:            NBody benchmark running with sequential C backend.
 Build-type:          Custom
 Cabal-version:       >=1.10
 
-Executable bench-nbody-cilk
+Executable bench-nbody-cpugpu
     Default-Language:    Haskell2010
     main-is:    Main.hs
     ghc-options: -O2 -threaded -rtsopts 
@@ -15,3 +15,4 @@ Executable bench-nbody-cilk
                  , accelerate-backend-kit >= 0.15
                  , accelerate-multidev    >= 0.15.0.1
                  , accelerate             >= 0.15
+                 , cuda >= 0.5.1.1
