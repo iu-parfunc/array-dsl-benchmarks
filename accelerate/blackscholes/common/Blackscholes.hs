@@ -5,7 +5,7 @@ import Random (randomUArrayR)
 
 import System.Random.MWC
 import Data.Array.IArray     as IArray
-import Data.Array.Accelerate as Acc
+import Data.Array.Accelerate as Acc hiding ((++))
 import Prelude               as P
 
 #ifdef ACCBACKEND
@@ -49,7 +49,8 @@ blackscholesAcc :: Acc (Acc.Array DIM2 (Float, Float, Float)) ->
                    Acc (Acc.Array DIM2 (Float, Float))
 blackscholesAcc xs = mat
   where mat = Acc.map go xs
-        go x = let (price, strike, years) = Acc.unlift x
+        go x = let price,strike,years :: Exp Float
+                   (price,strike,years) = Acc.unlift x
                    r       = Acc.constant riskfree
                    v       = Acc.constant volatility
                    v_sqrtT = v * sqrt years
@@ -60,7 +61,7 @@ blackscholesAcc xs = mat
                    cndD2   = cnd d2
                    x_expRT = strike * exp (-r * years)
               in Acc.lift ( price * cndD1 - x_expRT * cndD2
-                 , x_expRT * (1.0 - cndD2) - price * (1.0 - cndD1))
+                          , x_expRT * (1.0 - cndD2) - price * (1.0 - cndD1))
 
 
 blackscholesRef :: IArray.Array Int (Float,Float,Float) -> IArray.Array Int (Float,Float)
@@ -105,7 +106,7 @@ main = do args <- getArgs
           let inputSize = case args of
                             [] -> 100
                             [sz] -> read sz
-
+          putStrLn$"Blackscholes running on input size: "++show inputSize
           (_,run_acc) <- run inputSize -- 0000
 
           tBegin <- getCurrentTime
