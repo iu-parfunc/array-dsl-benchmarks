@@ -16,3 +16,4 @@ Executable bench-blackscholes-cuda
                  , accelerate-cuda        >= 0.13.0.99
                  , accelerate             >= 0.13.0.99
                  , mwc-random, vector     >= 0.10
+                 , cuda >= 0.5.1.1
