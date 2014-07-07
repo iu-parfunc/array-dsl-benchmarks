@@ -4,12 +4,11 @@ Synopsis:            NBody benchmark running with sequential C backend.
 Build-type:          Custom
 Cabal-version:       >=1.10
 
-Executable bench-nbody-2gpu
+Executable bench-nbody-cilk
     Default-Language:    Haskell2010
     main-is:    Main.hs
     ghc-options: -O2 -threaded -rtsopts 
     cpp-options: -DACCBACKEND=Data.Array.Accelerate.Multi_2GPU
-    cpp-options: -DEXTRAINITCUDA
     build-depends: base >= 4.6
                  , bytestring >= 0.10, time, array >= 0.4
                  , bytestring-lexing >= 0.4
