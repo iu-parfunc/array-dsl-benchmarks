@@ -9,6 +9,7 @@ Executable bench-blackscholes-2gpu
     hs-source-dirs: ../common/ ../../common    
     ghc-options: -O2 -threaded -rtsopts 
     cpp-options: -DACCBACKEND=Data.Array.Accelerate.Multi_2GPU
+    cpp-options: -DEXTRAINITCUDA
     build-depends: base >= 4.6
                  , bytestring >= 0.10, time, array >= 0.4
                  , bytestring-lexing >= 0.4
