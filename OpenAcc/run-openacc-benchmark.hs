@@ -19,7 +19,7 @@ benches =
 
 defaults = And [ Set NoMeaning (RuntimeEnv "PGI_ACC_TIME" "1")
                , Set NoMeaning (RuntimeEnv "ACC_NOTIFY"   "1") ] ++
-               [ Set (Variant "NumBodies"  (RuntimeEnv "NUM_BODIES"  (show x) | x <- [10000, 20000, 40000, 80000, 160000]]
+               [ Set (Variant "NumBodies")  (RuntimeEnv "NUM_BODIES"  (show x)) | x <- [10000, 20000, 40000, 80000, 160000]]
 
 main :: IO ()
 main = do
