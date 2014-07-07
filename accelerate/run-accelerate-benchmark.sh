@@ -96,6 +96,8 @@ for dir in $DIRS; do
   cd $HERE
 done
 
+$CABAL sandbox hc-pkg list
+
 # (0) Install all package dependencies
 # ------------------------------------------------------------
 
