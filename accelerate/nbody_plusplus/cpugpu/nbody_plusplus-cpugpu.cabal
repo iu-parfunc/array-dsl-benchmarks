@@ -1,0 +1,17 @@
+Name:                nbody-2gpu
+Version:             0.0.0.1
+Synopsis:            NBody benchmark running with sequential C backend.
+Build-type:          Custom
+Cabal-version:       >=1.10
+
+Executable bench-nbody-cilk
+    Default-Language:    Haskell2010
+    main-is:    Main.hs
+    ghc-options: -O2 -threaded -rtsopts 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.Multi_CPUGPU
+    build-depends: base >= 4.6
+                 , bytestring >= 0.10, time, array >= 0.4
+                 , bytestring-lexing >= 0.4
+                 , accelerate-backend-kit >= 0.15
+                 , accelerate-multidev    >= 0.15.0.1
+                 , accelerate             >= 0.15

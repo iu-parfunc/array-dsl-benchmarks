@@ -1,0 +1,18 @@
+Name:                nbody-cuda
+Version:             0.0.0.1
+Synopsis:            NBody benchmark running with sequential C backend.
+Build-type:          Custom
+Cabal-version:       >=1.10
+
+Executable bench-nbody-cuda
+    Default-Language:    Haskell2010
+    main-is:    Main.hs
+    ghc-options: -O2 -threaded -rtsopts 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.CUDA
+    build-depends: base >= 4.7
+                 , bytestring >= 0.10, time, array >= 0.4
+                 , bytestring-lexing >= 0.4
+                 , accelerate-backend-kit >= 0.15.0.0
+                 , accelerate             >= 0.15.0.0
+-- Fix this. Currently the cuda submodule points to 0.13. 
+                 , accelerate-cuda        >= 0.15.0.0
