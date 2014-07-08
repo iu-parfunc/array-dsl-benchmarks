@@ -51,13 +51,9 @@ cnd' d =
 
 
 blackscholesAcc :: Acc (Acc.Array DIM2 (Float, Float, Float)) -> 
-                   Acc (Acc.Array DIM1 (Float, Float))
-blackscholesAcc xs = Acc.fold c (constant (0, 0)) mat -- reduce to DIM1
+                   Acc (Acc.Array DIM2 (Float, Float))
+blackscholesAcc xs = mat
   where mat = Acc.map go xs
-        c x y = let a,b,c,d :: Exp Float
-                    (a, b) = Acc.unlift x
-                    (c, d) = Acc.unlift y
-                in Acc.lift (a+c,b+d)
         go x = let price,strike,years :: Exp Float
                    (price,strike,years) = Acc.unlift x
                    r       = Acc.constant riskfree
@@ -94,7 +90,7 @@ blackscholesRef xs = listArray (bounds xs) [ go x | x <- elems xs ]
 -- Main
 -- ----
 
-run :: Int -> IO (() -> IArray.Array Int (Float,Float), () -> Acc (Acc.Array DIM1 (Float,Float)))
+run :: Int -> IO (() -> IArray.Array Int (Float,Float), () -> Acc (Acc.Array DIM2 (Float,Float)))
 run n = withSystemRandom $ \gen -> do
   v_sp <- randomUArrayR (5,30)    gen n
   v_os <- randomUArrayR (1,100)   gen n
@@ -102,14 +98,7 @@ run n = withSystemRandom $ \gen -> do
 
   let v_psy = listArray (0,n-1) $ P.zip3 (elems v_sp) (elems v_os) (elems v_oy)
       a_psy = Acc.use $ Acc.fromIArray v_psy :: Acc (Acc.Array DIM1 (Float, Float, Float))
-#ifdef REPLICATE
       r_psy = Acc.replicate (constant (Z :. topLoop :. All)) a_psy :: Acc (Acc.Array DIM2 (Float, Float, Float))
-#else
-      r_psy = Acc.generate (constant (Z :. topLoop :. n)) f  -- generate rather than replicate
-      f ix  = let x, y :: Exp Int
-                  Z :. x :. y = Acc.unlift ix
-              in a_psy Acc.! (index1 y)
-#endif
   --
   return (run_ref v_psy, run_acc r_psy)
   where

@@ -98,7 +98,7 @@ bls_desktop =
 
   -- [2014.07.03] Reduce these when the 1000X work increase hits:
   blackscholes_args :: [Integer]
-  blackscholes_args = map (* 1000) [100, 1000, 2000, 10000]
+  blackscholes_args = [10000, 20000, 100000, 200000]
 
   -- Building/aggregating all variants:
   ----------------------------------------
