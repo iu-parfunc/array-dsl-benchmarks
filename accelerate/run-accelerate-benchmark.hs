@@ -124,25 +124,8 @@ bls_desktop =
   allBlackscholes = concat [ allvariants (blackscholes (show arg))
                            | arg <- blackscholes_args ]
 
---  allMultiBlackscholes = 
-       -- [ baseline { cmdargs=[ show arg ], 
-       --              configs= And[ Set (Variant vrnt) (RuntimeEnv "IGNORE_THIS" "")],
-       --              target= root++"blackscholes/"++vrnt,
-       --              progname= Just ("accelerate-blackscholes") }
-       -- | arg <- blackscholes_args 
-       -- , vrnt <- [ "cpugpu", "2gpu" ]]
-
   allNBodies = concat [ allvariants (nbody (show arg)) 
                       | arg <- nbody_args ]
-
-  -- allMultiNBodies = 
-  --      [ baseline { cmdargs=[ show arg ], 
-  --                   configs= And[ Set (Variant "cpugpu")
-  --                                 (RuntimeEnv "ACCELERATE_INPUT_FILE"
-  --                                  (root++"nbody_temp/common/uniform.3dpts"))],
-  --                   target= root++"nbody_temp/cpugpu",
-  --                   progname= Just "accelerate-nbody-cpugpu" }
-  --      | arg <- nbody_args ]
                 
   -- Vary the size of the big arithmetic expression generated:
   allScaleFlops = let sz = "2000000" in 
@@ -172,12 +155,12 @@ bls_desktop =
 
   blackscholes size var = 
               baseline { cmdargs=[size], 
-                         configs= And[ Set (Variant var) (RuntimeEnv "IGNORE_THIS" ""),
+                         configs= And[ -- Set (Variant var) (RuntimeEnv "IGNORE_THIS" ""),
                                        Or [ Set NoMeaning (CompileParam "--ghc-options=-DUSE_FOLD")
 --                                          , Set NoMeaning (CompileParam "")
                                           ],
-                                       Or [ Set NoMeaning (CompileParam "--ghc-options=-DUSE_REPLICATE")
-                                          , Set NoMeaning (CompileParam "")
+                                       Or [ Set (Variant (var++"-replicate")) (CompileParam "--ghc-options=-DUSE_REPLICATE")
+                                          , Set (Variant (var)) (CompileParam "")
                                           ]
                                      ],
                          target= root++"blackscholes", -- Just the root
