@@ -1,6 +1,7 @@
 NUM_BODIES?=25000
 
-all: nbody.exe nbody-omp.exe
+
+all: nbody.exe nbody-omp.exe 
 
 
 nbody.exe: nbody.c
