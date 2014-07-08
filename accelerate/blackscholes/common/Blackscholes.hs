@@ -16,7 +16,7 @@ import qualified ACCBACKEND as Bkend
 #endif
 
 import Control.Exception (evaluate)
-import Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..), SimpleBackend(..))
+import Data.Array.Accelerate.BackendClass (runTimed, runTimedSimple, AccTiming(..), SimpleBackend(..))
 import Data.Array.Accelerate.BackendKit.CompilerPipeline (phase0, phase1)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 import System.Environment (getArgs, getEnvironment)
@@ -149,24 +149,16 @@ main = do args <- getArgs
           let simpl = phase1 $ phase0 $ run_acc ()
           tBegin <- getCurrentTime
 #ifndef NOSIMPLE
-          rmts <- simpleRunRaw Bkend.defaultBackend Nothing simpl Nothing
-          -- mapM_ simpleWaitRemote rmts
-          mapM_ (simpleCopyToHost Bkend.defaultBackend) rmts
-          tEnd   <- getCurrentTime
+          (times,_output) <- runTimedSimple Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig simpl
           putStrLn$ "Finished executing through SimpleBackend. "
 #else
           (times,_output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (run_acc ())
+#endif
           let AccTiming{compileTime,runTime,copyTime} = times
           putStrLn$ "  All timing: "P.++ show times
           tEnd   <- getCurrentTime
-#  ifndef DONTPRINT       
+#ifndef DONTPRINT       
           putStrLn$ "JITTIME: "P.++ show compileTime
           putStrLn$ "SELFTIMED: "P.++ show (runTime + copyTime)
-#  endif
 #endif
-
-#ifndef DONTPRINT
-          putStrLn$ "SELFTIMED: " P.++ show (diffUTCTime tEnd tBegin)
-#else
-          putStrLn$ "  Total time: "P.++ show (diffUTCTime tEnd tBegin)
-#endif
+          putStrLn$ "Total elapsed time: "P.++ show (diffUTCTime tEnd tBegin)
