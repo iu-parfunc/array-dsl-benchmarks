@@ -34,6 +34,11 @@ source ../.hsbencher_fusion_config.sh
 
 TRIALS=3
 
+# List what is available:
+./run-openacc-benchmark.exe -l
+
 # Now run it:
-./run-openacc-benchmark.exe --keepgoing --trials=$TRIALS --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET $WHICHBENCH
+./run-openacc-benchmark.exe --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET $WHICHBENCH
 #$*
+
+# TEMP DISABLING --keepgoing --trials=$TRIALS
