@@ -28,7 +28,18 @@ pwd
 if [ "$CABAL" == "" ]; 
 then CABAL=cabal
 fi
-
+if [ "$JENKINS_GHC" == "" ]; then 
+  GHC=ghc
+  GHCPKG=ghc-pkg
+else
+  ENVSCRIPT=$HOME/rn_jenkins_scripts/acquire_ghc.sh
+  # This is specific to our testing setup at IU:
+  if [ -f "$ENVSCRIPT" ]; then 
+    source "$ENVSCRIPT"
+  fi
+  GHC=ghc-$JENKINS_GHC
+  GHCPKG=ghc-pkg-$JENKINS_GHC
+fi
 
 HSBENCHER_SANDBOX=$HERE/.cabal-sandbox/
 ACC=../accelerate_src
@@ -45,7 +56,7 @@ PKGS="$PKGS $ACC/ $ACC/accelerate-backend-kit/backend-kit/ \
 
 which $CABAL
 $CABAL --version
-CBLOPTS="--disable-documentation"
+CBLOPTS="--disable-documentation --with-ghc=$GHC"
 
 # Individual benchmark directories:
 DIRS="$HERE/nbody/seq_c \
