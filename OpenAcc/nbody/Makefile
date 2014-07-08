@@ -1,5 +1,7 @@
-NUM_BODIES?=25000
 
+RUN_ARGS?=25000
+
+NUM_BODIES=$(RUN_ARGS)
 
 all: nbody.exe nbody-omp.exe 
 

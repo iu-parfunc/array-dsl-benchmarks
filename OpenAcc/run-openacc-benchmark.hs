@@ -13,22 +13,17 @@ import HSBencher.Backend.Dribble (defaultDribblePlugin)
 
 benches :: [Benchmark DefaultParamMeaning]
 benches = 
-  [ mkBenchmark "./nbody/" [] defaults
+  [ mkBenchmark "./nbody/" (map show nbodySizes) defaults
 --  , mkBenchmark "./blackscholes/" [] defaults
   ]
 
-defaults = And [ Set NoMeaning (RuntimeEnv "PGI_ACC_TIME" "1")
-               , Set NoMeaning (RuntimeEnv "ACC_NOTIFY"   "1")
-               , Or [ Set (Variant "NumBodies")
-                          (RuntimeEnv "NUM_BODIES" (show x))
-                    | x <- [10000,
-                            20000,
-                            30000,
-                            40000,
-                            50000,
-                            80000,
-                            100000,
-                            160000]]]
+nbodySizes :: Integer
+nbodySizes = [10000, 20000, 30000,
+              40000, 50000, 80000,
+              100000, 160000]
+
+defaults = And [ Set (Variant "OpenAcc") (RuntimeEnv "PGI_ACC_TIME" "1")
+               , Set NoMeaning           (RuntimeEnv "ACC_NOTIFY"   "1") ]
         
 main :: IO ()
 main = do
@@ -41,4 +36,3 @@ main = do
         , plugIns   = [ SomePlugin defaultFusionPlugin,
                         SomePlugin defaultDribblePlugin ]
         }
-
