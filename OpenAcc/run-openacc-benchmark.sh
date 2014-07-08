@@ -35,5 +35,5 @@ source ../.hsbencher_fusion_config.sh
 TRIALS=3
 
 # Now run it:
-./run-openacc-benchmark.exe --keepgoing --trials=$TRIALS --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET 
+./run-openacc-benchmark.exe --keepgoing --trials=$TRIALS --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET $WHICHBENCH
 #$*
