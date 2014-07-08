@@ -149,8 +149,7 @@ TRIALS=3
 # List which benchmarks are available:
 ./run-accelerate-benchmark.exe -l
 
-# Enable upload of benchmarking data to a Google Fusion Table:
-./run-accelerate-benchmark.exe --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET $*
+PERSISTENCE="--keepgoing --trials=$TRIALS"
 
-# DISABLING --keepgoing for now 
-# DISABLING --trials=$TRIALS
+# Enable upload of benchmarking data to a Google Fusion Table:
+./run-accelerate-benchmark.exe $PERSISTENCE --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET $*
