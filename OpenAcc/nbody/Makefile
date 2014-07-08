@@ -3,7 +3,7 @@ RUN_ARGS?=25000
 
 NUM_BODIES=$(RUN_ARGS)
 
-all: nbody.exe nbody-omp.exe 
+all: nbody$(PROG_SUFFIX).exe 
 
 nbody.exe: nbody.c
 	pgcc -O2 -acc -Minline -Minfo -ta=nvidia,kepler -o nbody.exe nbody.c

@@ -3,9 +3,11 @@
 #include <sys/time.h> 
 #include <math.h>
 
-/* OpenACC math library */ 
 #ifdef _ACCEL
+/* OpenACC math library */ 
 #include <accelmath.h>
+#else
+#include <omp.h>
 #endif
 
 /* ---------------------------------------------------------------------- */ 
@@ -86,7 +88,7 @@ void calcAccels(int n,
 #ifdef _ACCEL
 #pragma acc kernels loop
 #endif
-  #pragma omp parallel for
+#pragma omp parallel for
   for (i = 0; i < n; ++i) { 
     Point p1 = bodies[i]; 
   
@@ -133,6 +135,13 @@ int main(int argc, char **argv)
   struct timeval begin; 
   struct timeval end; 
 
+  //omp_set_dynamic(0);
+  //omp_set_num_threads(16);
+
+#ifndef _ACCEL
+  printf("num_threads: %d/%d\n", omp_get_num_threads(), omp_get_max_threads());
+#endif
+ 
   switch (argc) { 
   case 1: size = DEFAULT_SIZE; break; 
   case 2: sscanf(argv[1],"%d",&size); break;  
@@ -185,6 +194,6 @@ int main(int argc, char **argv)
       foo += a[i].x + a[i].y + a[i].z;
   }
   printf("%lf\t%lf\n", ifoo, foo);
- 
+
   return 0;
 }
