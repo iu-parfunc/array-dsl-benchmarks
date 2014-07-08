@@ -1,0 +1,21 @@
+Name:                mandel-cuda
+Version:             0.0.0.1
+Build-type:          Simple
+Cabal-version:       >=1.10
+
+Executable bench-mandel-cuda
+    Default-Language:    Haskell2010
+    main-is:    Main.hs
+    hs-source-dirs: ../common ../../common
+    ghc-options: -O2 -threaded -rtsopts 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.CUDA -DNOSIMPLE
+    build-depends: base >= 4.7
+                 , time, array >= 0.4, random
+                 , mwc-random, vector >= 0.10
+                 , bytestring >= 0.10, bytestring-lexing >= 0.4
+                 , accelerate-backend-kit >= 0.15.0.4
+                 , accelerate-icc-opencl  >= 0.15.0.0
+                 , accelerate-cuda        >= 0.15.0.0
+                 , accelerate-multidev    >= 0.15.0.0
+                 , accelerate             >= 0.15.0.0
+                 , cuda >= 0.5.1.1

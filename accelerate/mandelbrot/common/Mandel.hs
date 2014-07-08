@@ -3,7 +3,7 @@
 -- A Mandelbrot set generator.
 -- Originally submitted by Simon Marlow as part of Issue #49.
 --
-module Mandel (
+module Mandel {-(
 
   -- Types
   View, Render, Bitmap,
@@ -11,7 +11,7 @@ module Mandel (
   -- Pretty pictures
   mandelbrot, prettyRGBA,
 
-) where
+)-} where
 
 import Prelude                                  as P
 import Data.Array.Accelerate                    as A hiding ( size )
@@ -27,10 +27,10 @@ type Complex a          = (a, a)
 type ComplexPlane a     = Array DIM2 (Complex a)
 
 -- Image data
-type Bitmap             = Array DIM2 RGBA32
+-- type Bitmap             = Array DIM2 RGBA32
 
 -- Action to render a frame
-type Render a           = Scalar (View a) -> Bitmap
+-- type Render a           = Scalar (View a) -> Bitmap
 
 
 -- Mandelbrot Set --------------------------------------------------------------
@@ -126,6 +126,7 @@ mkinit cs = A.zip cs (A.fill (A.shape cs) 0)
 --     b   = (t * 3 `rem` 256     ) * 0x100
 --     a   = 0xFF
 
+{-
 prettyRGBA :: forall a. (Elt a, IsFloating a) => Exp Int -> Exp (Complex a, Int) -> Exp RGBA32
 prettyRGBA lIMIT s =
   let cmax      = A.fromIntegral lIMIT          :: Exp a
@@ -172,3 +173,4 @@ rampColourHotToCold vmin vmax vNotNorm
     in
     rgba32OfFloat result
 
+-}

@@ -43,7 +43,7 @@ EOF
 }
 
 doit seq_c C 
-doit cilk CILK
+doit cilk Cilk
 doit cuda CUDA              -DNOSIMPLE
 doit fission1 FissionExampleBackend
 doit fission2 FissionCUDA
