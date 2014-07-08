@@ -13,8 +13,7 @@ import HSBencher.Backend.Dribble (defaultDribblePlugin)
 
 benches :: [Benchmark DefaultParamMeaning]
 benches = 
-  [ mkBenchmark "./nbody/" [sz] defaults
-  | sz <- map show nbodySizes ]
+  [ mkBenchmark "./nbody/" [show x] defaults | x <- nbodySizes ]
 --  , mkBenchmark "./blackscholes/" [] defaults
 
 nbodySizes :: [Integer]
