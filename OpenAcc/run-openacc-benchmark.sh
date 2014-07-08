@@ -13,7 +13,7 @@ if [ "$CABAL" == "" ];
 then CABAL=cabal
 fi
 
-CBLOPTS="--disable-documentation"
+CBLOPTS="--disable-documentation --force-reinstalls"
 
 # (0) Dependencies, input data
 # ============================================================
