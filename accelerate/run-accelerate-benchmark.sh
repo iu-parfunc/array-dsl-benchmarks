@@ -124,11 +124,17 @@ find -name ".genC_*" | xargs rm -f
 # (1) Build the benchmark harness itself
 # ------------------------------------------------------------
 
-# $CABAL install $CBLOPTS --bindir=. --program-suffix=.exe
+# Ugh, network barfs if given --bindir=.: [2014.07.08]
+# $CABAL install $CBLOPTS network-2.5.0.0
 
 # Combined phase (0) & (1): [2014.07.07]
 # Addresses failures such as:   http://goo.gl/y6ltSM
-$CABAL install $CBLOPTS $PKGS -j ./ --bindir=. --program-suffix=.exe --force-reinstalls --constraint='cuda<0.6'
+$CABAL install $CBLOPTS $PKGS -j ./ --force-reinstalls --constraint='cuda<0.6'
+
+# Reinstall in this directory... but because we already installed
+# above, this should not actually need a full rebuild (or run into dep problems):
+$CABAL install $CBLOPTS --bindir=. --program-suffix=.exe
+
 
 # (2) Then we run the actual benchmarks
 # ----------------------------------------
