@@ -172,7 +172,14 @@ bls_desktop =
 
   blackscholes size var = 
               baseline { cmdargs=[size], 
-                         configs= And[ Set (Variant var) (RuntimeEnv "IGNORE_THIS" "")],
+                         configs= And[ Set (Variant var) (RuntimeEnv "IGNORE_THIS" ""),
+                                       Or [ Set NoMeaning (CompileParam "--ghc-options=-DUSE_FOLD")
+--                                          , Set NoMeaning (CompileParam "")
+                                          ],
+                                       Or [ Set NoMeaning (CompileParam "--ghc-options=-DUSE_REPLICATE")
+                                          , Set NoMeaning (CompileParam "")
+                                          ]
+                                     ],
                          target= root++"blackscholes", -- Just the root
                          progname= Just "accelerate-blackscholes" }
 

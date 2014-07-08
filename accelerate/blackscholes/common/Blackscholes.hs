@@ -98,7 +98,13 @@ blackscholesRef xs = listArray (bounds xs) [ go x | x <- elems xs ]
     , strike * expRT * (1.0 - cndD2) - price * (1.0 - cndD1))
 
 
+#ifdef USE_REPLICATE
+#warning "Using REPLICATE in Blackscholes, this might be optimized"
+use_replicate = True
+#else
+#warning "Not using replicate in Blackscholes"
 use_replicate = False
+#endif
 
 -- Main
 -- ----
@@ -136,8 +142,10 @@ main = do args <- getArgs
           (_,run_nofold, run_wfold) <- run inputSize -- 0000
 
 #ifdef USE_FOLD
+#warning "Using FOLD version of Blackscholes"
           let run_acc = run_wfold
 #else
+#warning "Using full-matrix-return version of Blackscholes (no-fold)"
           let run_acc = run_nofold
 #endif
 
