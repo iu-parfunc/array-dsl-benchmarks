@@ -189,8 +189,8 @@ bls_desktop =
     [ (fn "seqC") { target= dirroot++"/seq_c/" }
     , (fn "cuda") { target= dirroot++"/cuda/"  }
 
-    , varyCilkThreads threadSelection $ (fn "cilk") { target= dirroot++"/cilk/"  }
-    , varyFission     threadSelection $ (fn "fission1") { target= dirroot++"/fission1/" }
+    , varyCilkThreads   threadSelection  $ (fn "cilk") { target= dirroot++"/cilk/"  }
+    , varyFission (tail threadSelection) $ (fn "fission1") { target= dirroot++"/fission1/" }
     , (fn "fission2") { target= dirroot++"/fission2/"  }
     -- , varyFission     threadSelection $ (fn "spmd2")    { target= dirroot++"/spmd2/" }
     , (fn "spmd2")    { target= dirroot++"/spmd2/"  }
