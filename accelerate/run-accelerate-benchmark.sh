@@ -108,12 +108,16 @@ find -name ".genC_*" | xargs rm -f
 
 # The machines we're measuring on currently have CUDA 5.5 and we're
 # seeing problems with the cuda-0.6 haskell library [2014.07.06]: 
-$CABAL install $CBLOPTS $PKGS -j --force-reinstalls --constraint='cuda<0.6'
+# $CABAL install $CBLOPTS $PKGS -j --force-reinstalls --constraint='cuda<0.6'
 
 # (1) Build the benchmark harness itself
 # ------------------------------------------------------------
 
-$CABAL install $CBLOPTS --bindir=. --program-suffix=.exe
+# $CABAL install $CBLOPTS --bindir=. --program-suffix=.exe
+
+# Combined phase (0) & (1): [2014.07.07]
+# Addresses failures such as:   http://goo.gl/y6ltSM
+$CABAL install $CBLOPTS $PKGS -j ./ --bindir=. --program-suffix=.exe --force-reinstalls --constraint='cuda<0.6'
 
 # (2) Then we run the actual benchmarks
 # ----------------------------------------

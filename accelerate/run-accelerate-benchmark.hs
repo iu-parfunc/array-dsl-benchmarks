@@ -72,6 +72,16 @@ main = do
 -- Here are the actual benchmarks:
 --------------------------------------------------------------------------------
 
+-- TODO: create different settings for these based on quick vs. big runs:
+nbody_args :: [Integer]
+-- nbody_args = [10000, 15000, 25000 ]
+-- nbody_args = [1000,2000 .. 66000] -- FIXME: too many datapoints [2014.07.02]
+nbody_args = [1000,5000 .. 66000] 
+
+blackscholes_args :: [Integer]
+blackscholes_args = [10000, 20000, 100000, 200000]
+
+
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
   ------ Traditional benchmarks ------
@@ -90,15 +100,6 @@ bls_desktop =
  where 
   -- Argument variation:
   ----------------------------------------
-
-  nbody_args :: [Integer]
-  -- nbody_args = [10000, 15000, 25000 ]
-  -- nbody_args = [1000,2000 .. 66000] -- FIXME: too many datapoints [2014.07.02]
-  nbody_args = [1000,5000 .. 66000] 
-
-  -- [2014.07.03] Reduce these when the 1000X work increase hits:
-  blackscholes_args :: [Integer]
-  blackscholes_args = [10000, 20000, 100000, 200000]
 
   -- Building/aggregating all variants:
   ----------------------------------------
