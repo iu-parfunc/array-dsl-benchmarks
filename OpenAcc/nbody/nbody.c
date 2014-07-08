@@ -1,10 +1,12 @@
 #include <stdlib.h> 
 #include <stdio.h> 
 #include <sys/time.h> 
-
+#include <math.h>
 
 /* OpenACC math library */ 
+#ifdef _ACCEL
 #include <accelmath.h>
+#endif
 
 /* ---------------------------------------------------------------------- */ 
 
@@ -22,12 +24,16 @@ typedef struct {
 
 
 /* ---------------------------------------------------------------------- */ 
-int loadData(FILE *fp, int n, Point *p){ 
-
+void loadData(FILE *fp, int n, Point *p){ 
+  int i;
   double a,b,c; 
 
-  for(int i = 0; i < n; ++i) { 
-    fscanf(fp,"%lf %lf %lf\n",&a, &b, & c) ; 
+  // eat the first line.
+  char line[80];
+  fscanf(fp, "%s\n", line);
+
+  for(i = 0; i < n; ++i) { 
+    fscanf(fp,"%lf %lf %lf\n",&a, &b, & c); 
     p[i].x = a; 
     p[i].y = b; 
     p[i].z = c;   
@@ -75,19 +81,24 @@ Point accel(Point p1, Point p2)  {
 void calcAccels(int n, 
                 Point * restrict bodies, 
                 Point * restrict accels) {
-  
+  int i;
  /* get accel from every combination */ 
-#pragma acc parallel loop
-#pragma omp parallel for
-  for (int i = 0; i < n; ++i) { 
+#ifdef _ACCEL
+#pragma acc kernels loop
+#endif
+  #pragma omp parallel for
+  for (i = 0; i < n; ++i) { 
     Point p1 = bodies[i]; 
   
     double tx = 0; 
     double ty = 0; 
     double tz = 0; 
     Point r; 
-  
-    for (int j = 0; j < n; ++j) { 
+    int j;
+
+// Uncommenting this pragma exposes more parallelism, but in my test it actually slows things down.  
+//#pragma omp parallel for reduction(+:tx,ty,tz)
+    for (j = 0; j < n; ++j) { 
   
       r = accel(bodies[i], bodies[j]); 
       
@@ -143,7 +154,9 @@ int main(int argc, char **argv)
   a = (Point*)malloc(size*sizeof(Point)); 
   
   /* Intialize Acc before launch of kernel and timint */
+  #ifdef _ACCEL
   acc_init();
+  #endif
   
   loadData(fp,size,p); 
 
@@ -163,6 +176,15 @@ int main(int argc, char **argv)
     printf("ACCEL: %lf %lf %lf\n", a[i].x, a[i].y, a[i].z); 
   }
 #endif 
-  
+
+  // Touch every value to keep compiler from optimizing away all the work.
+  double ifoo = 0;
+  double foo = 0;
+  for(int i = 0; i < size; ++i) {
+      ifoo += p[i].x + p[i].y + p[i].z;
+      foo += a[i].x + a[i].y + a[i].z;
+  }
+  printf("%lf\t%lf\n", ifoo, foo);
+ 
   return 0;
 }
