@@ -11,7 +11,7 @@ Executable run-openacc-benchmark
     Main-is: run-openacc-benchmark.hs
     Build-depends: base >= 4.6, containers >= 0.5,
                    GenericPretty >= 1.2.1,
-                   hsbencher >= 1.8.0.9,
+                   hsbencher >= 1.8.0.10,
                    hsbencher-fusion >= 0.1
     ghc-options: -threaded
     default-language:  Haskell2010

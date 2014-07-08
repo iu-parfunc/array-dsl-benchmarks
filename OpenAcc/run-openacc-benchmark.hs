@@ -21,11 +21,11 @@ nbodySizes = [10000, 20000, 30000,
               40000, 50000, 80000,
               100000, 160000]
 
-defaults = [And [ Set (Variant "OpenAcc") (RuntimeEnv "PGI_ACC_TIME" "1")
-               , Set NoMeaning           (RuntimeEnv "ACC_NOTIFY"   "1") ],
-            And [ Set (Variant "OpenMP") (RuntimeEnv "PGI_ACC_TIME" "1")
-                , Set NoMeaning           (RuntimeEnv "ACC_NOTIFY"   "1")
-                , Set NoMeaning           (RuntimeEnv "PROG_SUFFIX"  "-omp")]]
+defaults = [ And [ Set (Variant "OpenAcc") (RuntimeEnv "PGI_ACC_TIME" "1")
+                 , Set NoMeaning           (RuntimeEnv "ACC_NOTIFY"   "1") ]
+           , And [ Set (Variant "OpenMP") (RuntimeEnv "PGI_ACC_TIME" "1")
+                 , Set NoMeaning          (RuntimeEnv "ACC_NOTIFY"   "1")
+                 , Set NoMeaning          (RuntimeEnv "PROG_SUFFIX"  "-omp") ]]
         
 main :: IO ()
 main = do
