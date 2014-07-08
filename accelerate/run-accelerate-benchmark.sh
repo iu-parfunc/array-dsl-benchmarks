@@ -124,4 +124,7 @@ source ../.hsbencher_fusion_config.sh
 TRIALS=3
 
 # Enable upload of benchmarking data to a Google Fusion Table:
-./run-accelerate-benchmark.exe --keepgoing --trials=$TRIALS --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET $*
+./run-accelerate-benchmark.exe --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET $*
+
+# DISABLING --keepgoing for now 
+# DISABLING --trials=$TRIALS
