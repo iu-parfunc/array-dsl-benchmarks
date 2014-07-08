@@ -89,12 +89,15 @@ nbody_args = [1000,5000 .. 66000]
 blackscholes_args :: [Integer]
 blackscholes_args = [10000, 20000, 100000, 200000]
 
+mandel_args :: [Integer]
+mandel_args = [100,200,500,1000,2000,3000]
 
 bls_desktop :: [Benchmark DefaultParamMeaning]
 bls_desktop = 
   ------ Traditional benchmarks ------
   allBlackscholes
   ++ allNBodies 
+  ++ allMandel
 
   ------ Multi-device benchmarks ------
   -- ++ allMultiNBodies        
@@ -123,6 +126,9 @@ bls_desktop =
 
   allBlackscholes = concat [ allvariants (blackscholes (show arg))
                            | arg <- blackscholes_args ]
+
+  allMandel = concat [ allvariants (mandel (show arg))
+                     | arg <- mandel_args ]
 
   allNBodies = concat [ allvariants (nbody (show arg)) 
                       | arg <- nbody_args ] ++ 
@@ -154,6 +160,12 @@ bls_desktop =
                                          (root++"nbody/makefile_based/uniform.3dpts"))],
                          target= root++"nbody", -- Just the root
                          progname= Just "accelerate-nbody-float" }
+
+  mandel size var = 
+              baseline { cmdargs=[size], 
+                         configs= And[ Set (Variant var) (RuntimeEnv "IGNORE_THIS" "")],
+                         target= root++"mandel", -- Just the root
+                         progname= Just "accelerate-mandel" }
 
   nbody_plusplus size var = 
               baseline { cmdargs=[size], 
