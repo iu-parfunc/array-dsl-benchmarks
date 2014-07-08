@@ -14,6 +14,9 @@ which icc || echo ok
 # Adding this for Delta on Futuregrid, but it should be harmless elsewhere.
 module add cuda/5.5 || echo "Ok that that didnt work."
 
+which -a nvcc  || echo ok
+nvcc --version || echo ok
+
 # The first argument to this script is usually the root directory for the repo.
 if [ -d "$1" ]; then 
   HERE=$1/accelerate
@@ -121,4 +124,7 @@ source ../.hsbencher_fusion_config.sh
 TRIALS=3
 
 # Enable upload of benchmarking data to a Google Fusion Table:
-./run-accelerate-benchmark.exe --keepgoing --trials=$TRIALS --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET $*
+./run-accelerate-benchmark.exe --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET $*
+
+# DISABLING --keepgoing for now 
+# DISABLING --trials=$TRIALS
