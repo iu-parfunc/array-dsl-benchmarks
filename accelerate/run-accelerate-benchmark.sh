@@ -69,6 +69,7 @@ DIRS="$HERE/nbody/seq_c \
    $HERE/blackscholes/cilk  \
    $HERE/blackscholes/cuda  \
    $HERE/blackscholes/fission1  \
+   $HERE/blackscholes/fission2  \
    $HERE/blackscholes/spmd1  \
    $HERE/blackscholes/spmd2  \
    $HERE/blackscholes/cpugpu \
@@ -143,6 +144,9 @@ $CABAL install $CBLOPTS --bindir=. --program-suffix=.exe
 source ../.hsbencher_fusion_config.sh
 
 TRIALS=3
+
+# List which benchmarks are available:
+./run-accelerate-benchmark.exe -l
 
 # Enable upload of benchmarking data to a Google Fusion Table:
 ./run-accelerate-benchmark.exe --fusion-upload --name=$TABLENAME --clientid=$CLIENTID --clientsecret=$SECRET $*

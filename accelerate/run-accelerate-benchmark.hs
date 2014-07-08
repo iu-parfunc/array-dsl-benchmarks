@@ -126,11 +126,11 @@ bls_desktop =
 
   allMultiBlackscholes = 
        [ baseline { cmdargs=[ show arg ], 
-                    configs= And[ Set (Variant "cpugpu")
-                                   (RuntimeEnv "IGNORE_THIS" "")],
-                    target= root++"blackscholes_temp/cpugpu",
-                    progname= Just "accelerate-blackscholes-cpugpu" }
-       | arg <- blackscholes_args ]
+                    configs= And[ Set (Variant vrnt) (RuntimeEnv "IGNORE_THIS" "")],
+                    target= root++"blackscholes/"++vrnt,
+                    progname= Just ("accelerate-blackscholes") }
+       | arg <- blackscholes_args 
+       , vrnt <- [ "cpugpu", "2gpu" ]]
 
   allNBodies = concat [ allvariants (nbody (show arg)) 
                       | arg <- nbody_args ]
@@ -172,8 +172,7 @@ bls_desktop =
 
   blackscholes size var = 
               baseline { cmdargs=[size], 
-                         configs= And[ Set (Variant var)
-                                        (RuntimeEnv "IGNORE_THIS" "")],
+                         configs= And[ Set (Variant var) (RuntimeEnv "IGNORE_THIS" "")],
                          target= root++"blackscholes", -- Just the root
                          progname= Just "accelerate-blackscholes" }
 
