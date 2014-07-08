@@ -45,4 +45,6 @@ you will find in the HSBencher script run_benchmarks.hs.
 
 
 
+ * Radix - uses scan
+ * SMVM - uses segmented ops
 

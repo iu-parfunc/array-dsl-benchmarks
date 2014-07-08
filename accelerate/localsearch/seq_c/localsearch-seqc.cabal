@@ -1,14 +1,14 @@
-Name:                localsearch-spmd2
+Name:                localsearch-seqc
 Version:             0.0.0.1
 Build-type:          Simple
 Cabal-version:       >=1.10
 
-Executable bench-localsearch-spmd2
+Executable bench-localsearch-seqc
     Default-Language:    Haskell2010
     main-is:    Main.hs
     hs-source-dirs: ../common ../../common
     ghc-options: -O2 -threaded -rtsopts 
-    cpp-options: -DACCBACKEND=Data.Array.Accelerate.SPMD_Example2 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.C 
     build-depends: base >= 4.7
                  , time, array >= 0.4, random
                  , mwc-random, vector >= 0.10
