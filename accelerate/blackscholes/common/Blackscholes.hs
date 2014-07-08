@@ -157,7 +157,8 @@ main = do args <- getArgs
           let AccTiming{compileTime,runTime,copyTime} = times
           putStrLn$ "  All timing: "P.++ show times
           tEnd   <- getCurrentTime
-#ifndef DONTPRINT       
+-- ifndef DONTPRINT       
+#if 1
           putStrLn$ "JITTIME: "P.++ show compileTime
           putStrLn$ "SELFTIMED: "P.++ show (runTime + copyTime)
 #endif
