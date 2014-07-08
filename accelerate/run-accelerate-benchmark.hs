@@ -14,6 +14,7 @@ Where mode is 'desktop', 'server', or 'quick'.
 
 module Main where
 
+import Data.Monoid
 import           GHC.Conc           (getNumProcessors)
 import           System.Console.GetOpt
 import           System.Environment (getEnvironment, getArgs, withArgs)
@@ -25,7 +26,7 @@ import HSBencher (defaultMainModifyConfig, all_cli_options,
 import HSBencher.Methods.Builtin (makeMethod)
 import HSBencher.Backend.Fusion  (defaultFusionPlugin)
 import HSBencher.Backend.Dribble (defaultDribblePlugin)
-
+import HSBencher.Harvesters (customTagHarvesterDouble)
 
 --------------------------------------------------------------------------------
 -- Main Script
@@ -65,6 +66,13 @@ main = do
 --            , buildMethods = [makeMethod]
            , plugIns   = [ SomePlugin defaultFusionPlugin,
                            SomePlugin defaultDribblePlugin ]
+
+           -- [2014.07.08] RRN: This method isn't yet perfect because
+           -- we need to do a sum over multiple occurrences of
+           -- SUBSELFTIMED or SUBJITTIME:
+           , harvesters = customTagHarvesterDouble "SUBSELFTIMED" `mappend`
+                          customTagHarvesterDouble "SUBJITTIME"   `mappend`
+                          harvesters conf
            }
 
     
