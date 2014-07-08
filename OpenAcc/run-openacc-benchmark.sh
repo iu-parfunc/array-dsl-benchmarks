@@ -15,6 +15,10 @@ fi
 
 CBLOPTS="--disable-documentation --force-reinstalls"
 
+# What happend to module add pgi ? 
+# =====================
+module add pgi
+
 # (0) Dependencies, input data
 # ============================================================
 
