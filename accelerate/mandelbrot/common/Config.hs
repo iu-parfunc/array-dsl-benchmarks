@@ -8,8 +8,8 @@ module Config (
 
 ) where
 
-import qualified Criterion.Main                         as Crit
-import qualified Criterion.Config                       as Crit
+-- import qualified Criterion.Main                         as Crit
+-- import qualified Criterion.Config                       as Crit
 import Data.Label
 import System.Exit
 import System.Console.GetOpt (OptDescr(..), ArgDescr(..), ArgOrder(Permute), getOpt', usageInfo)
@@ -64,7 +64,7 @@ options =
 
 
 -- | Two levels of argument parsing -- ours and criterions.
-processArgs :: [String] -> IO (Options, Crit.Config, [String])
+processArgs :: [String] -> IO (Options, (), [String])
 processArgs argv =
   case getOpt' Permute options argv of
     (o,_,n,[])  -> do -- Pass unrecognized options onward:
@@ -75,7 +75,7 @@ processArgs argv =
     (_,_,_,err) -> error (helpMsg err)
   where
     helpMsg err = concat err ++ usageInfo header options ++
-                  usageInfo "\nGeneric criterion options:" Crit.defaultOptions
+                  usageInfo "\nGeneric criterion options:" [] -- Crit.defaultOptions
     header      = unlines
       [ "accelerate-mandelbrot (c) [2011..2012] The Accelerate Team"
       , ""

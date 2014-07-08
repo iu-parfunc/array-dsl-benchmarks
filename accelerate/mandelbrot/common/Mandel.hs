@@ -15,7 +15,7 @@ module Mandel (
 
 import Prelude                                  as P
 import Data.Array.Accelerate                    as A hiding ( size )
-import Data.Array.Accelerate.IO                 as A
+-- import Data.Array.Accelerate.IO                 as A
 
 -- Types -----------------------------------------------------------------------
 
