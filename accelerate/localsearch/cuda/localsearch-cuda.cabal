@@ -1,0 +1,17 @@
+Name:                localsearch-cuda
+Version:             0.0.0.1
+Build-type:          Simple
+Cabal-version:       >=1.10
+
+Executable bench-localsearch-cuda
+    Default-Language:    Haskell2010
+    main-is:    Main.hs
+    hs-source-dirs: ../common
+    ghc-options: -O2 -threaded -rtsopts 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.CUDA
+    cpp-options: -DNOSIMPLE
+    build-depends: base >= 4.7
+                 , time, array >= 0.4, random
+                 , accelerate-backend-kit >= 0.15.0.4
+                 , accelerate-cuda        >= 0.15.0.0
+                 , accelerate             >= 0.15.0.0

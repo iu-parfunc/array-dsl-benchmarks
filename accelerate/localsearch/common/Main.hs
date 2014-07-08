@@ -45,9 +45,10 @@ import Foreign.CUDA.Driver (initialise)
 -- Parmeters
 --------------------------------------------------------------------------------
 
-bitstringSize = 20
-bitstringNum  = 1000
-searchIters   = 100
+default_bitstringSize = 20
+default_bitstringNum  = 1000
+-- default_searchIters   = 100
+default_searchIters   = 10
 numRangeLow   = -20
 numRangeHigh  = 20
 
@@ -63,12 +64,12 @@ main = do
 #endif
 
   args <- getArgs
-  (n) <- case args of
-         []  -> do putStrLn "Using default size for input."
-                   return bitstringNum
-         [n] -> do putStrLn$ "bitstring pop size on command line: N="++ show n
-                   return $ read n
-  env <- getEnvironment
+  let [searchIters, bitstringNum, bitstringSize] = 
+        P.map read args ++ 
+        P.take (3 - length args) [default_searchIters, default_bitstringNum, default_bitstringSize]
+  putStrLn$ "Got "++show (length args)++" command line args."
+  putStrLn$ " Params (searchIters, bitstringNum, bitstringSize) = "++show (searchIters, bitstringNum, bitstringSize)
+
   tBegin <- getCurrentTime
   performGC
   tEnd   <- getCurrentTime
