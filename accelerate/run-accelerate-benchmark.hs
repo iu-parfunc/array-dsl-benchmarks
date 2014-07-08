@@ -97,8 +97,8 @@ bls_desktop =
   ++ allNBodies 
 
   ------ Multi-device benchmarks ------
-  ++ allMultiNBodies        
-  ++ allMultiBlackscholes   
+  -- ++ allMultiNBodies        
+  -- ++ allMultiBlackscholes   
 
   ------ Micro-benchmarks ------
   ++ allScaleFlops
@@ -124,25 +124,25 @@ bls_desktop =
   allBlackscholes = concat [ allvariants (blackscholes (show arg))
                            | arg <- blackscholes_args ]
 
-  allMultiBlackscholes = 
-       [ baseline { cmdargs=[ show arg ], 
-                    configs= And[ Set (Variant vrnt) (RuntimeEnv "IGNORE_THIS" "")],
-                    target= root++"blackscholes/"++vrnt,
-                    progname= Just ("accelerate-blackscholes") }
-       | arg <- blackscholes_args 
-       , vrnt <- [ "cpugpu", "2gpu" ]]
+--  allMultiBlackscholes = 
+       -- [ baseline { cmdargs=[ show arg ], 
+       --              configs= And[ Set (Variant vrnt) (RuntimeEnv "IGNORE_THIS" "")],
+       --              target= root++"blackscholes/"++vrnt,
+       --              progname= Just ("accelerate-blackscholes") }
+       -- | arg <- blackscholes_args 
+       -- , vrnt <- [ "cpugpu", "2gpu" ]]
 
   allNBodies = concat [ allvariants (nbody (show arg)) 
                       | arg <- nbody_args ]
 
-  allMultiNBodies = 
-       [ baseline { cmdargs=[ show arg ], 
-                    configs= And[ Set (Variant "cpugpu")
-                                  (RuntimeEnv "ACCELERATE_INPUT_FILE"
-                                   (root++"nbody_temp/common/uniform.3dpts"))],
-                    target= root++"nbody_temp/cpugpu",
-                    progname= Just "accelerate-nbody-cpugpu" }
-       | arg <- nbody_args ]
+  -- allMultiNBodies = 
+  --      [ baseline { cmdargs=[ show arg ], 
+  --                   configs= And[ Set (Variant "cpugpu")
+  --                                 (RuntimeEnv "ACCELERATE_INPUT_FILE"
+  --                                  (root++"nbody_temp/common/uniform.3dpts"))],
+  --                   target= root++"nbody_temp/cpugpu",
+  --                   progname= Just "accelerate-nbody-cpugpu" }
+  --      | arg <- nbody_args ]
                 
   -- Vary the size of the big arithmetic expression generated:
   allScaleFlops = let sz = "2000000" in 
@@ -198,11 +198,16 @@ bls_desktop =
     let dirroot = target (fn "seqC") in 
     [ (fn "seqC") { target= dirroot++"/seq_c/" }
     , (fn "cuda") { target= dirroot++"/cuda/"  }
-    , (fn "cpugpu") { target= dirroot++"/cpugpu/"  }
-    , (fn "2gpu")   { target= dirroot++"/2gpu/"  }
+
     , varyCilkThreads threadSelection $ (fn "cilk") { target= dirroot++"/cilk/"  }
-    , varyFission threadSelection $ (fn "fission1") { target= dirroot++"/fission1/" }
-    , varyFission threadSelection $ (fn "spmd2")    { target= dirroot++"/spmd2/" }
+    , varyFission     threadSelection $ (fn "fission1") { target= dirroot++"/fission1/" }
+    , (fn "fission2") { target= dirroot++"/fission2/"  }
+    -- , varyFission     threadSelection $ (fn "spmd2")    { target= dirroot++"/spmd2/" }
+    , (fn "spmd2")    { target= dirroot++"/spmd2/"  }
+
+    -- TODO: Vary threads for CPU/GPU:
+    , (fn "cpugpu")   { target= dirroot++"/cpugpu/"  }
+    , (fn "2gpu")     { target= dirroot++"/2gpu/"  }
     ]
 
   baseline = Benchmark { cmdargs=[], configs= And[], benchTimeOut=Just defaultTimeout, target="", progname=Nothing }
