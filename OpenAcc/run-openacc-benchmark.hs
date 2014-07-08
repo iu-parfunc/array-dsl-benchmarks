@@ -17,7 +17,7 @@ benches =
 --  , mkBenchmark "./blackscholes/" [] defaults
   ]
 
-nbodySizes :: Integer
+nbodySizes :: [Integer]
 nbodySizes = [10000, 20000, 30000,
               40000, 50000, 80000,
               100000, 160000]
