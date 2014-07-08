@@ -125,6 +125,8 @@ bls_desktop =
                            | arg <- blackscholes_args ]
 
   allNBodies = concat [ allvariants (nbody (show arg)) 
+                      | arg <- nbody_args ] ++ 
+               concat [ allvariants (nbody_plusplus (show arg)) 
                       | arg <- nbody_args ]
                 
   -- Vary the size of the big arithmetic expression generated:
@@ -152,6 +154,14 @@ bls_desktop =
                                          (root++"nbody/makefile_based/uniform.3dpts"))],
                          target= root++"nbody", -- Just the root
                          progname= Just "accelerate-nbody-float" }
+
+  nbody_plusplus size var = 
+              baseline { cmdargs=[size], 
+                         configs= And[ Set (Variant var)
+                                        (RuntimeEnv "ACCELERATE_INPUT_FILE"
+                                         (root++"nbody_plusplus/makefile_based/uniform.3dpts"))],
+                         target= root++"nbody_plusplus", -- Just the root
+                         progname= Just "accelerate-nbody_plusplus-float" }
 
   blackscholes size var = 
               baseline { cmdargs=[size], 
@@ -190,10 +200,9 @@ bls_desktop =
     , (fn "cuda") { target= dirroot++"/cuda/"  }
 
     , varyCilkThreads   threadSelection  $ (fn "cilk") { target= dirroot++"/cilk/"  }
-    , varyFission (tail threadSelection) $ (fn "fission1") { target= dirroot++"/fission1/" }
+    , varyFission fissionSelection $ (fn "fission1") { target= dirroot++"/fission1/" }
     , (fn "fission2") { target= dirroot++"/fission2/"  }
-    -- , varyFission     threadSelection $ (fn "spmd2")    { target= dirroot++"/spmd2/" }
-    , (fn "spmd2")    { target= dirroot++"/spmd2/"  }
+    , varyFission  fissionSelection $ (fn "spmd2")    { target= dirroot++"/spmd2/" }
 
     -- TODO: Vary threads for CPU/GPU:
     , (fn "cpugpu")   { target= dirroot++"/cpugpu/"  }
@@ -231,6 +240,12 @@ threadSelection = unsafePerformIO $ do
     Nothing
       | p <= 16   -> return  [1 .. p]
       | otherwise -> return$ 1 : [2,4 .. p]
+
+fissionSelection :: [Int]
+fissionSelection = unsafePerformIO $ do
+  p   <- getNumProcessors
+  return $ takeWhile (<p) [ 2^n | n <- [1..]] ++ 
+           [p, 2*p, 4*p]
 
 varyCilkThreads :: [Int] -> Benchmark DefaultParamMeaning -> Benchmark DefaultParamMeaning
 varyCilkThreads settings bench@Benchmark{configs} = 

@@ -72,6 +72,7 @@ function add_all() {
   DIRS+=" $HERE/$b/2gpu"
 }
 add_all nbody
+add_all nbody_plusplus
 add_all blackscholes
 
 # More individual benchmark directories:
