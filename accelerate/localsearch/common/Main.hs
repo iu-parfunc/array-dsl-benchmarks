@@ -16,7 +16,8 @@ import qualified ACCBACKEND as Bkend
 -- import qualified Data.Array.Accelerate.CUDA as Bkend
 #endif
 import qualified Data.Array.Accelerate.Interpreter as I
-import           Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..))
+import           Data.Array.Accelerate.BackendClass 
+import Data.Array.Accelerate.BackendKit.CompilerPipeline (phase0, phase1)
 
 -- system
 import Control.Exception (evaluate)
@@ -36,6 +37,9 @@ import System.Mem  (performGC)
 import Data.Maybe (fromJust)
 import Debug.Trace 
 
+#ifdef EXTRAINITCUDA
+import Foreign.CUDA.Driver (initialise)
+#endif
 
 --------------------------------------------------------------------------------
 -- Parmeters
@@ -53,6 +57,11 @@ numRangeHigh  = 20
 
 main :: IO ()
 main = do
+#ifdef EXTRAINITCUDA
+  initialise []
+  putStrLn$"CUDA initialized - this is a hack to work around an apparent accelerate-cuda bug."
+#endif
+
   args <- getArgs
   (n) <- case args of
          []  -> do putStrLn "Using default size for input."
@@ -75,11 +84,19 @@ main = do
                  (passNum 0) (passNum (2^bitstringSize - 1))
                  (passNum numRangeLow) (passNum numRangeHigh)
       rns      = P.take searchIters $ randomRs (0, bitstringSize-1) g
-  (times, output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (evalFunc $ translateNums $ runSearch rns evalFunc useArrs)
-  --(times,output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (calcAccels input)
+
+  let fullacc = evalFunc $ translateNums $ runSearch rns evalFunc useArrs
+      simpl = phase1 $ phase0 fullacc
+#ifndef NOSIMPLE
+  (times, output) <- runTimedSimple Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig simpl
   tEnd   <- getCurrentTime
-  let AccTiming{compileTime,runTime,copyTime} = times
+  putStrLn$ "Finished executing through SimpleBackend. "
+#else
+  (times, output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig fullacc
+  tEnd   <- getCurrentTime
   putStrLn$ "  Result: "++ show(P.minimum $ A.toList output)
+#endif
+  let AccTiming{compileTime,runTime,copyTime} = times
   putStrLn$ "  All timing: "++ show times
   putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
   putStrLn$ "JITTIME: "++ show compileTime

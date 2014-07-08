@@ -7,10 +7,11 @@ Cabal-version:       >=1.10
 Executable bench-localsearch-spmd2
     Default-Language:    Haskell2010
     main-is:    Main.hs
+    hs-source-dirs: ../common
     ghc-options: -O2 -threaded -rtsopts 
     cpp-options: -DACCBACKEND=Data.Array.Accelerate.SPMD_Example2
     build-depends: base >= 4.7
                  , time, array >= 0.4, random
-                 , accelerate-backend-kit >= 0.15.0.0
+                 , accelerate-backend-kit >= 0.15.0.4
                  , accelerate-multidev    >= 0.15.0.0
                  , accelerate             >= 0.15.0.0
