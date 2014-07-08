@@ -1,19 +1,20 @@
-Name:                dotprod-spmd1
+Name:                dotprod-2gpu
 Version:             0.0.0.1
 Build-type:          Simple
 Cabal-version:       >=1.10
 
-Executable bench-dotprod-spmd1
+Executable bench-dotprod-2gpu
     Default-Language:    Haskell2010
     main-is:    Dotprod_iota.hs
     hs-source-dirs: ../common/ ../../common    
     ghc-options: -O2 -threaded -rtsopts 
-    cpp-options: -DACCBACKEND=Data.Array.Accelerate.SPMD_Example1
-    cpp-options: -DNOSIMPLE
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.Multi_2GPU
+    cpp-options: -DEXTRAINITCUDA
     build-depends: base >= 4.6
                  , bytestring >= 0.10, time, array >= 0.4
                  , bytestring-lexing >= 0.4
-                 , accelerate-backend-kit >= 0.13.0.99
-                 , accelerate-icc-opencl  >= 0.13.0.99
-                 , accelerate             >= 0.13.0.99
+                 , accelerate-backend-kit >= 0.15
+                 , accelerate-multidev    >= 0.15.0.1
+                 , accelerate             >= 0.15
                  , mwc-random, vector     >= 0.10
+                 , cuda >= 0.5.1.1
