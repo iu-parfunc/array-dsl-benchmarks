@@ -12,7 +12,7 @@ Executable bench-blackscholes-fission2
     build-depends: base >= 4.6
                  , bytestring >= 0.10, time, array >= 0.4
                  , bytestring-lexing >= 0.4
-                 , accelerate-backend-kit >= 0.13.0.99
+                 , accelerate-backend-kit >= 0.15.0.4
                  , accelerate-icc-opencl  >= 0.13.0.99
                  , accelerate-multidev    >= 0.13.0.99
                  , accelerate             >= 0.13.0.99

@@ -16,7 +16,8 @@ import qualified ACCBACKEND as Bkend
 -- import qualified Data.Array.Accelerate.CUDA as Bkend
 #endif
 import qualified Data.Array.Accelerate.Interpreter as I
-import           Data.Array.Accelerate.BackendClass (runTimed, AccTiming(..))
+import           Data.Array.Accelerate.BackendClass (runTimed, runTimedSimple, AccTiming(..))
+import Data.Array.Accelerate.BackendKit.CompilerPipeline (phase0, phase1)
 
 -- system
 import Control.Exception (evaluate)
@@ -38,6 +39,12 @@ import Data.Maybe (fromJust)
 import Debug.Trace 
 
 import Common.Util (plusV)
+
+-- Temp hack: 
+#ifdef EXTRAINITCUDA
+import Foreign.CUDA.Driver (initialise)
+#endif
+
 --------------------------------------------------------------------------------
 -- Settings
 --------------------------------------------------------------------------------
@@ -114,8 +121,7 @@ main = do
               Just s -> s
     
 -- Temporary: for debugging we aren't using a file at all:
-#ifdef DEBUG
-#else
+#ifndef DEBUG
   putStrLn$ "NBODY: Reading requested prefix of input file... "++show n
   tBegin <- getCurrentTime
   raw    <- readGeomFile n file
@@ -138,23 +144,37 @@ main = do
   putStrLn$ "  Input prefix(4) "++ show(P.take 3$ U.elems raw)
   evaluate input0
 #endif
+
+
+#ifdef EXTRAINITCUDA
+  initialise []
+  putStrLn$"CUDA initialized - this is a hack to work around an apparent accelerate-cuda bug."
+#endif
+
   performGC
   tEnd   <- getCurrentTime
-
   putStrLn$ "Input in CPU memory and did GC (took "++show (diffUTCTime tEnd tBegin)++"), starting benchmark..."
   tBegin <- getCurrentTime
+  let simpl = phase1 $ phase0 (calcAccels input)
+#ifndef NOSIMPLE
+  (times,output) <- runTimedSimple Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig simpl
+  tEnd   <- getCurrentTime
+  putStrLn$ "Finished executing through SimpleBackend. "
+#else
   (times,output) <- runTimed Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig (calcAccels input)
   tEnd   <- getCurrentTime
-  let AccTiming{compileTime,runTime,copyTime} = times
   putStrLn$ "  Result prefix(4): "++ show(P.take 3$ A.toList output)
   putStrLn$ "  Result shape "++ show(A.arrayShape output)
+#endif
+  let AccTiming{compileTime,runTime,copyTime} = times
   putStrLn$ "  All timing: "++ show times
   putStrLn$ "  Total time for runTimed "++ show (diffUTCTime tEnd tBegin)
   putStrLn$ "JITTIME: "++ show compileTime
   putStrLn$ "SELFTIMED: "++ show (runTime + copyTime)
+#ifdef NOSIMPLE
   putStrLn$ "Writing output file to: "++ outputFile
   writeGeomFile outputFile output
-
+#endif
 
 ----------------------------------------------------------------------------------------------------
 -- The actual benchmark code:
@@ -198,59 +218,3 @@ accel body1 body2
     aabs        = (m1 * m2) / rsqr
     r           = sqrt rsqr
 
-
-
-
---------------------------------------------------------------------------------
--- OLD Main
---------------------------------------------------------------------------------
-
--- import Data.Label
--- import System.Random.MWC                        ( uniformR )
--- import Criterion                                ( bench, whnf, runBenchmark )
--- import Criterion.Monad                          ( withConfig )
--- import Criterion.Analysis                       ( analyseMean )
--- import Criterion.Environment                    ( measureEnvironment )
-
--- main :: IO ()
--- main
---   = do  (conf, cconf, nops)     <- parseArgs =<< getArgs
-
---         let solver      = case get configSolver conf of
---                             Naive       -> Naive.calcAccels
---                             BarnsHut    -> BarnsHut.calcAccels
-
---             n           = get configBodyCount conf
---             epsilon     = get configEpsilon conf
-
---             -- Generate random particle positions in a disc layout centred at
---             -- the origin. Start the system rotating with particle speed
---             -- proportional to distance from the origin
---             --
---             positions   = randomArrayOf (disc (0,0) (get configStartDiscSize conf)) (Z :. n)
---             masses      = randomArrayOf (\_ -> uniformR (1, get configBodyMass conf)) (Z :. n)
-
---             bodies      = run conf
---                         $ A.map (setStartVelOfBody . constant $ get configStartSpeed conf)
---                         $ A.zipWith setMassOfBody (A.use masses)
---                         $ A.map (A.uncurry unitBody)
---                         $ A.use positions
-
---             -- The initial simulation state
---             --
---             world       = World { worldBodies   = bodies
---                                 , worldSteps    = 0
---                                 , worldTime     = 0 }
-
---             -- Advancing the simulation
---             --
---             advance     = advanceWorld step
---             step        = P.curry
---                         $ run1 conf
---                         $ A.uncurry
---                         $ advanceBodies (solver $ constant epsilon)
-
---         -- Forward unto dawn
---         --
---         mean <- withConfig cconf $ measureEnvironment >>= flip runBenchmark (whnf (advance 0.1) world) >>= flip analyseMean 100
---         putStrLn $ "SELFTIMED: " ++ show mean
