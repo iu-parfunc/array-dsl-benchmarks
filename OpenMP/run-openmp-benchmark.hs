@@ -13,15 +13,17 @@ import HSBencher.Backend.Dribble (defaultDribblePlugin)
 
 benches :: [Benchmark DefaultParamMeaning]
 benches = 
-  [ (mkBenchmark "./nbody/" [show x] (And []) )
-    { progname = Just "openmp-nbody"  } | x <- nbodySizes ]
+  [ (mkBenchmark "./nbody/" [threads, show x] (And []) )
+    { progname = Just "openmp-nbody"  }
+  | x <- nbodySizes
+  , threads <- [1..16]]
 --  , mkBenchmark "./blackscholes/" [] defaults
 
 nbodySizes :: [Integer]
 nbodySizes = [1000,5000 .. 66000]
 
-openMPOpts  = And [ Set (Variant ("OpenMP Threads " ++ (show x)))
-                    (RuntimeEnv "OMP_NUM_THREADS" (show x))| x <- [1..16]]
+-- openMPOpts  = And [ Set (Variant ("OpenMP Threads " ++ (show x)))
+--                    (RuntimeEnv "OMP_NUM_THREADS" (show x))| x <- [1..16]]
         
 main :: IO ()
 main = do
