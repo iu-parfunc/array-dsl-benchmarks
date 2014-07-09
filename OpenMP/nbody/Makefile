@@ -12,6 +12,3 @@ nbody.exe: nbody.c
 run: nbody.exe
 	./nbody.exe $(NUM_BODIES)
 
-
-clean:
-	rm nbody.exe
