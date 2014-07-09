@@ -15,8 +15,8 @@ fi
 
 CBLOPTS="--disable-documentation --force-reinstalls"
 
-# What happend to module add pgi ? 
-# =====================
+# This benchmark needs the pgi compiler
+# ============================================================
 module add pgi
 
 # (0) Dependencies, input data

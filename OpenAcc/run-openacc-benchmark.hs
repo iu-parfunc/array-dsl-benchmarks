@@ -13,21 +13,20 @@ import HSBencher.Backend.Dribble (defaultDribblePlugin)
 
 benches :: [Benchmark DefaultParamMeaning]
 benches = 
-  [ (mkBenchmark "./nbody/" [show x] openAccOpts) { progname = Just "openacc-nbody" } | x <- nbodySizes ] ++ 
-  [ (mkBenchmark "./nbody/" [show x] openMPOpts)  { progname = Just "openmp-nbody"  } | x <- nbodySizes ]
+  [ (mkBenchmark "./nbody/" [show x] openAccOpts)
+    { progname = Just "openacc-nbody" } | x <- nbodySizes ]
+  
+--  [ (mkBenchmark "./nbody/" [show x] openMPOpts)  { progname = Just "openmp-nbody"  } | x <- nbodySizes ]
 --  , mkBenchmark "./blackscholes/" [] defaults
 
 nbodySizes :: [Integer]
 nbodySizes = [1000,5000 .. 66000]
-             --[10000, 20000, 30000,
-             -- 40000, 50000, 80000,
-             -- 100000, 160000]
 
 openAccOpts = And [ Set (Variant "OpenAcc") (RuntimeEnv "PGI_ACC_TIME" "1")
                   , Set NoMeaning           (RuntimeEnv "ACC_NOTIFY"   "1") ]
-openMPOpts  = And [ Set (Variant "OpenMP") (RuntimeEnv "PGI_ACC_TIME" "1")
-                  , Set NoMeaning          (RuntimeEnv "ACC_NOTIFY"   "1")
-                  , Set NoMeaning          (RuntimeEnv "PROG_SUFFIX"  "-omp") ]
+--openMPOpts  = And [ Set (Variant "OpenMP") (RuntimeEnv "PGI_ACC_TIME" "1")
+--                  , Set NoMeaning          (RuntimeEnv "ACC_NOTIFY"   "1")
+--                  , Set NoMeaning          (RuntimeEnv "PROG_SUFFIX"  "-omp") ]
         
 main :: IO ()
 main = do
