@@ -13,7 +13,7 @@ import HSBencher.Backend.Dribble (defaultDribblePlugin)
 
 benches :: [Benchmark DefaultParamMeaning]
 benches = 
-  [ (mkBenchmark "./nbody/" [threads, show x] (And []) )
+  [ (mkBenchmark "./nbody/" [show threads, show x] (And []) )
     { progname = Just "openmp-nbody"  }
   | x <- nbodySizes
   , threads <- [1..16]]
