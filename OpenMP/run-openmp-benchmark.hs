@@ -20,7 +20,8 @@ benches =
 nbodySizes :: [Integer]
 nbodySizes = [1000,5000 .. 66000]
 
--- openMPOpts  = And [ Set (Variant "OpenMP") (RuntimeEnv "PGI_ACC_TIME" "1")]
+openMPOpts  = And [ Set (Variant ("OpenMP Threads " ++ (show x)))
+                    (RuntimeEnv "OMP_NUM_THREADS" (show x))| x <- [1..16]]
         
 main :: IO ()
 main = do
