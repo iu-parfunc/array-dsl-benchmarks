@@ -13,7 +13,7 @@ import HSBencher.Backend.Dribble (defaultDribblePlugin)
 
 benches :: [Benchmark DefaultParamMeaning]
 benches = 
-  [ (mkBenchmark "./nbody/" [show x] defaults )
+  [ (mkBenchmark "./nbody/" [show x] (And []) )
     { progname = Just "openmp-nbody"  } | x <- nbodySizes ]
 --  , mkBenchmark "./blackscholes/" [] defaults
 
