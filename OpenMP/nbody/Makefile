@@ -1,8 +1,8 @@
 
 -- RUN_ARGS?=25000
 
-THREADS=$(RUN_ARGS[1])
-NUM_BODIES=$(RUN_ARGS[2])
+THREADS=$(word 1, $(RUN_ARGS))
+NUM_BODIES=$(word 2, $(RUN_ARGS))
 
 .phony: all
 all:
