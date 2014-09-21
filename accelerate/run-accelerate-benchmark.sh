@@ -133,7 +133,9 @@ find -name ".genC_*" | xargs rm -f
 
 # Combined phase (0) & (1): [2014.07.07]
 # Addresses failures such as:   http://goo.gl/y6ltSM
-$CABAL install $CBLOPTS $PKGS -j ./ --force-reinstalls --constraint='cuda<0.6'
+
+# This is a result of shotgun debugging. I hate cabal. 
+$CABAL install $CBLOPTS $PKGS -j ./ mainland-pretty tls http-conduit-1.9.6 network-2.5.0.0 --force-reinstalls --constraint='cuda<0.6' --constraint='network==2.5.0.0'
 
 # Reinstall in this directory... but because we already installed
 # above, this should not actually need a full rebuild (or run into dep problems):
