@@ -8,7 +8,7 @@ Executable bench-nbody-seq-c
     Default-Language:    Haskell2010
     main-is:    Main.hs
     ghc-options: -O2 -threaded -rtsopts 
-    cpp-options: -DACCBACKEND=Data.Array.Accelerate.C
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.C 
     build-depends: base >= 4.7
                  , bytestring >= 0.10, time, array >= 0.4
                  , bytestring-lexing >= 0.4

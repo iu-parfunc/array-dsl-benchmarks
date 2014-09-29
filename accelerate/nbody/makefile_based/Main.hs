@@ -133,7 +133,7 @@ main = do
   let input :: A.Acc (A.Vector Position)
 #ifdef DEBUG      
       input = A.generate (A.index1$ A.constant$ fromJust n) $ \ix ->
-                let i,one :: A.Exp Double
+                let i,one :: A.Exp Float
                     i = A.fromIntegral $ A.unindex1 ix
                     one = 1 in
                 A.lift (i,i,i)    
