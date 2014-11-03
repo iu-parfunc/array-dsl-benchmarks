@@ -9,3 +9,6 @@
 	path = accelerate_src
 	url = git@github.com:AccelerateHS/accelerate.git
 	branch = multidev
+[submodule "http-conduit"]
+	path = http-conduit
+	url = https://github.com/vollmerm/http-conduit

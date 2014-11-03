@@ -43,7 +43,7 @@ fi
 
 HSBENCHER_SANDBOX=$HERE/.cabal-sandbox/
 ACC=../accelerate_src
-PKGS=" ../HSBencher/hsbencher/ ../HSBencher/hsbencher-fusion/ ../HSBencher/hgdata/ "
+PKGS=" ../HSBencher/hsbencher/ ../HSBencher/hsbencher-fusion/ ../HSBencher/hgdata/ ../http-conduit/ "
 PKGS="$PKGS $ACC/ $ACC/accelerate-backend-kit/backend-kit/ \
                   $ACC/accelerate-backend-kit/icc-opencl/  \
                   $ACC/accelerate-multidev/ \
