@@ -8,3 +8,4 @@
 [submodule "accelerate_src"]
 	path = accelerate_src
 	url = git@github.com:AccelerateHS/accelerate.git
+	branch = multidev
