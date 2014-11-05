@@ -1,0 +1,19 @@
+Name:                blackscholes-cpugpugpu
+Version:             0.0.0.1
+Build-type:          Simple
+Cabal-version:       >=1.10
+
+Executable bench-blackscholes-cpugpugpu
+    Default-Language:    Haskell2010
+    main-is:    Blackscholes.hs
+    hs-source-dirs: ../common/ ../../common    
+    ghc-options: -O2 -threaded -rtsopts 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.Multi_CPUGPUGPU
+    build-depends: base >= 4.6
+                 , bytestring >= 0.10, time, array >= 0.4
+                 , bytestring-lexing >= 0.4
+                 , accelerate-backend-kit >= 0.15.0.4
+                 , accelerate-multidev    >= 0.15.0.1
+                 , accelerate             >= 0.15
+                 , mwc-random, vector >= 0.10
+                 , cuda >= 0.5.1.1
