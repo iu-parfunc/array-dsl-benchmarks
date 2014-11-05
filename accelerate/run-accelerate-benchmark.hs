@@ -70,8 +70,15 @@ main = do
            -- [2014.07.08] RRN: This method isn't yet perfect because
            -- we need to do a sum over multiple occurrences of
            -- SUBSELFTIMED or SUBJITTIME:
-           , harvesters = customTagHarvesterDouble "SUBSELFTIMED" `mappend`
-                          customTagHarvesterDouble "SUBJITTIME"   `mappend`
+           , harvesters = customTagHarvesterDouble "COMPILETIME_CUDA" `mappend`
+                          customTagHarvesterDouble "COMPILETIME_CUDA1"   `mappend`
+                          customTagHarvesterDouble "COMPILETIME_CILK"   `mappend`
+                          customTagHarvesterDouble "RUNTIME_C"   `mappend`
+                          customTagHarvesterDouble "RUNTIME_CUDA1"   `mappend`
+                          customTagHarvesterDouble "RUNTIME_CUDA2"   `mappend`
+                          customTagHarvesterDouble "RUNTIME_CILK"   `mappend`
+                          customTagHarvesterDouble "COMPILETIME_TOTAL"   `mappend`
+                          customTagHarvesterDouble "RUNTIME_TOTAL"   `mappend`
                           harvesters conf
            }
 
@@ -217,8 +224,8 @@ bls_desktop =
     , varyFission  fissionSelection $ (fn "spmd2")    { target= dirroot++"/spmd2/" }
 
     -- TODO: Vary threads for CPU/GPU:
-    , (fn "cpugpu")   { target= dirroot++"/cpugpu/"  }
-    , (fn "2gpu")     { target= dirroot++"/2gpu/"  }
+    , varyFission fissionSelection $ (fn "cpugpu")   { target= dirroot++"/cpugpu/"  }
+    , varyFission fissionSelection $ (fn "2gpu")     { target= dirroot++"/2gpu/"  }
     ]
 
   baseline = Benchmark { cmdargs=[], configs= And[], benchTimeOut=Just defaultTimeout, target="", progname=Nothing }
