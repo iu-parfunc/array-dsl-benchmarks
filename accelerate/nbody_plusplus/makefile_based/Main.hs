@@ -74,7 +74,7 @@ readGeomFile len path = do
   str <- B.readFile path
   let (hd:lines) = B.lines str
 
-  let numlines = length lines
+  let numlines = P.length lines
       len2 = case len of
                Just n  -> n
                Nothing -> numlines
