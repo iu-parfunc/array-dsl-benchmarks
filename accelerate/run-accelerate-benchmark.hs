@@ -138,9 +138,9 @@ bls_desktop =
                      | arg <- mandel_args ]
 
   allNBodies = concat [ allvariants (nbody (show arg)) 
-                      | arg <- nbody_args ] ++ 
-               concat [ allvariants (nbody_plusplus (show arg)) 
                       | arg <- nbody_args ]
+--               concat [ allvariants (nbody_plusplus (show arg)) 
+--                      | arg <- nbody_args ]
                 
   -- Vary the size of the big arithmetic expression generated:
   allScaleFlops = let sz = "2000000" in 
@@ -174,13 +174,13 @@ bls_desktop =
                          target= root++"mandel", -- Just the root
                          progname= Just "accelerate-mandel" }
 
-  nbody_plusplus size var = 
-              baseline { cmdargs=[size], 
-                         configs= And[ Set (Variant var)
-                                        (RuntimeEnv "ACCELERATE_INPUT_FILE"
-                                         (root++"nbody_plusplus/makefile_based/uniform.3dpts"))],
-                         target= root++"nbody_plusplus", -- Just the root
-                         progname= Just "accelerate-nbody_plusplus-float" }
+--  nbody_plusplus size var = 
+--              baseline { cmdargs=[size], 
+--                         configs= And[ Set (Variant var)
+--                                        (RuntimeEnv "ACCELERATE_INPUT_FILE"
+--                                         (root++"nbody_plusplus/makefile_based/uniform.3dpts"))],
+--                         target= root++"nbody_plusplus", -- Just the root
+--                         progname= Just "accelerate-nbody_plusplus-float" }
 
   blackscholes size var = 
               baseline { cmdargs=[size], 

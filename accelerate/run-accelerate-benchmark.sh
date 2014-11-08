@@ -72,9 +72,11 @@ function add_all() {
   DIRS+=" $HERE/$b/2gpu"
 }
 add_all nbody
-add_all nbody_plusplus
 add_all blackscholes
 add_all mandel
+
+# Retired:
+# add_all nbody_plusplus
 
 # More individual benchmark directories:
 DIRS+=" $HERE/scale_flops/seq_c \
