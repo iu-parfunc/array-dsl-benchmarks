@@ -73,7 +73,7 @@ function add_all() {
 }
 add_all nbody
 add_all blackscholes
-add_all mandel
+add_all mandelbrot
 
 # Retired:
 # add_all nbody_plusplus

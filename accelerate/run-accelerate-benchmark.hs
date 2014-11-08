@@ -171,7 +171,7 @@ bls_desktop =
   mandel size var = 
               baseline { cmdargs=[size], 
                          configs= And[ Set (Variant var) (RuntimeEnv "IGNORE_THIS" "")],
-                         target= root++"mandel", -- Just the root
+                         target= root++"mandelbrot", -- Just the root
                          progname= Just "accelerate-mandel" }
 
 --  nbody_plusplus size var = 
