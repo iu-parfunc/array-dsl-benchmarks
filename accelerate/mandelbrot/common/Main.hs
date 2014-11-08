@@ -6,7 +6,7 @@
 --
 
 -- import World
-import qualified Mandel 
+import qualified Mandel
 -- import Config
 
 -- import Data.Label
@@ -37,7 +37,7 @@ import qualified ACCBACKEND as Bkend
 -- import qualified Data.Array.Accelerate.CUDA as Bkend
 #endif
 
--- Temp hack: 
+-- Temp hack:
 #ifdef EXTRAINITCUDA
 import Foreign.CUDA.Driver (initialise)
 #endif
@@ -55,8 +55,8 @@ main
         --     force arr   = indexArray arr (Z:.0:.0) `seq` arr
 
         --     mandel      = do
-        --       mean <- withConfig critConf $ measureEnvironment >>= 
-        --               flip runBenchmark (whnf (force . renderWorld) world) >>= 
+        --       mean <- withConfig critConf $ measureEnvironment >>=
+        --               flip runBenchmark (whnf (force . renderWorld) world) >>=
         --               flip analyseMean 100
         --       putStrLn $ "SELFTIMED: " ++ show mean
 
@@ -71,10 +71,10 @@ main
         let def_size  = 2000
             def_depth = 25
 
-        args <- getArgs 
+        args <- getArgs
         let (size,depth) = case args of
-                            []   -> (def_size, def_depth)
-                            [sz] -> (read sz, def_depth)
+                            []     -> (def_size, def_depth)
+                            [sz]   -> (read sz, def_depth)
                             [sz,d] -> (read sz, read d)
         putStrLn$"Mandel running on "++show size++"x"++show size++" image size, depth "++show depth
 
@@ -83,10 +83,14 @@ main
         putStrLn$"CUDA initialized - this is a hack to work around an apparent accelerate-cuda bug."
 #endif
 
-        let view  = (-0.25, -1.0, 0.0, -0.75)
-            fullacc :: Acc (Array DIM2 (Mandel.Complex Float,Int))
+        let view :: Mandel.View Float
+            view  = (-0.25, -1.0, 0.0, -0.75)
+
+            fullacc :: Acc (Array DIM2 Int32)
             fullacc = Mandel.mandelbrot size size depth (A.unit (A.constant view))
-        let simpl = phase1 $ phase0 fullacc
+
+            simpl = phase1 $ phase0 fullacc
+
         tBegin <- getCurrentTime
 #ifndef NOSIMPLE
         (times,_output) <- runTimedSimple Bkend.defaultBackend Nothing Bkend.defaultTrafoConfig simpl
@@ -97,7 +101,7 @@ main
         let AccTiming{compileTime,runTime,copyTime} = times
         putStrLn$ "  All timing: "P.++ show times
         tEnd   <- getCurrentTime
--- ifndef DONTPRINT       
+-- ifndef DONTPRINT
 #if 1
         putStrLn$ "JITTIME: "P.++ show compileTime
         putStrLn$ "SELFTIMED: "P.++ show (runTime + copyTime)

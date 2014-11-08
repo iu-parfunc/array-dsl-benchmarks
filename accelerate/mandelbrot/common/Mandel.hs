@@ -3,28 +3,25 @@
 -- A Mandelbrot set generator.
 -- Originally submitted by Simon Marlow as part of Issue #49.
 --
-module Mandel {-(
+module Mandel (
 
   -- Types
-  View, Render, Bitmap,
+  View, -- Render, Bitmap,
 
   -- Pretty pictures
-  mandelbrot, prettyRGBA,
+  mandelbrot, -- prettyRGBA,
 
-)-} where
+) where
 
 import Prelude                                  as P
-import Data.Array.Accelerate                    as A hiding ( size )
+import Data.Array.Accelerate                    as A
 -- import Data.Array.Accelerate.IO                 as A
+import Data.Array.Accelerate.Data.Complex
 
 -- Types -----------------------------------------------------------------------
 
 -- Current view into the complex plane
 type View a             = (a, a, a, a)
-
--- Complex numbers
-type Complex a          = (a, a)
-type ComplexPlane a     = Array DIM2 (Complex a)
 
 -- Image data
 -- type Bitmap             = Array DIM2 RGBA32
@@ -39,9 +36,7 @@ type ComplexPlane a     = Array DIM2 (Complex a)
 --
 --   Z_{n+1} = c + Z_n^2
 --
--- This is applied until the iteration limit is reached, regardless of whether
--- or not the pixel has diverged. This implies wasted work, but no thread
--- divergence.
+-- This returns the iteration depth 'i' at divergence.
 --
 mandelbrot
     :: forall a. (Elt a, IsFloating a)
@@ -49,90 +44,79 @@ mandelbrot
     -> Int
     -> Int
     -> Acc (Scalar (View a))
-    -> Acc (Array DIM2 (Complex a,Int))
-mandelbrot screenX screenY depth view
-  = foldr ($) zs0 (P.take depth (repeat go))
+    -> Acc (Array DIM2 Int32)
+mandelbrot screenX screenY depth view =
+  generate (constant (Z:.screenY:.screenX))
+           (\ix -> let c = initial ix
+                   in  A.snd $ A.while (\zi -> A.snd zi <* lIMIT &&* dot (A.fst zi) <* 4)
+                                       (\zi -> lift1 (next c) zi)
+                                       (lift (c, constant 0)))
   where
-    cs  = genPlane screenX screenY view
-    zs0 = mkinit cs
+    -- The view plane
+    (xmin,ymin,xmax,ymax)     = unlift (the view)
+    sizex                     = xmax - xmin
+    sizey                     = ymax - ymin
 
-    go :: Acc (Array DIM2 (Complex a, Int)) -> Acc (Array DIM2 (Complex a, Int))
-    go = A.zipWith iter cs
+    viewx                     = constant (P.fromIntegral screenX)
+    viewy                     = constant (P.fromIntegral screenY)
 
+    -- initial conditions for a given pixel in the window, translated to the
+    -- corresponding point in the complex plane
+    initial :: Exp DIM2 -> Exp (Complex a)
+    initial ix = lift ( (xmin + (x * sizex) / viewx) :+ (ymin + (y * sizey) / viewy) )
+      where
+        pr = unindex2 ix
+        x  = A.fromIntegral (A.snd pr :: Exp Int)
+        y  = A.fromIntegral (A.fst pr :: Exp Int)
 
-genPlane :: (Elt a, IsFloating a) => Int -> Int -> Acc (Scalar (View a)) -> Acc (ComplexPlane a)
-genPlane screenX screenY view
-  = generate (constant (Z:.screenY:.screenX))
-             (\ix -> let pr = unindex2 ix
-                         x = A.fromIntegral (A.fst pr :: Exp Int)
-                         y = A.fromIntegral (A.snd pr :: Exp Int)
-                     in
-                       lift ( xmin + (x * sizex) / viewx
-                            , ymin + (y * sizey) / viewy))
-  where
-    (xmin,ymin,xmax,ymax) = unlift (the view)
+    -- take a single step of the iteration
+    next :: Exp (Complex a) -> (Exp (Complex a), Exp Int32) -> (Exp (Complex a), Exp Int32)
+    next c (z, i) = (c + (z * z), i+1)
 
-    sizex = xmax - xmin
-    sizey = ymax - ymin
+    dot c = let r :+ i = unlift c
+            in  r*r + i*i
 
-    viewx = constant (P.fromIntegral screenX)
-    viewy = constant (P.fromIntegral screenY)
-
-
-next :: (Elt a, IsNum a) => Exp (Complex a) -> Exp (Complex a) -> Exp (Complex a)
-next c z = c `plus` (z `times` z)
-
-
-plus :: (Elt a, IsNum a) => Exp (Complex a) -> Exp (Complex a) -> Exp (Complex a)
-plus = lift2 f
-  where f :: (Elt a, IsNum a) => (Exp a, Exp a) -> (Exp a, Exp a) -> (Exp a, Exp a)
-        f (x1,y1) (x2,y2) = (x1+x2, y1+y2)
-
-times :: forall a. (Elt a, IsNum a) => Exp (Complex a) -> Exp (Complex a) -> Exp (Complex a)
-times = lift2 f
-  where f :: (Elt a, IsNum a) => (Exp a, Exp a) -> (Exp a, Exp a) -> (Exp a, Exp a)
-        f (x,y) (x',y')   =  (x*x'-y*y', x*y'+y*x')
-
-dot :: forall a. (Elt a, IsNum a) => Exp (Complex a) -> Exp a
-dot = lift1 f
-  where f :: (Elt a, IsNum a) => (Exp a, Exp a) -> Exp a
-        f (x,y) = x*x + y*y
-
-
-iter :: forall a. (Elt a, IsNum a) => Exp (Complex a) -> Exp (Complex a, Int) -> Exp (Complex a, Int)
-iter c zi = f (A.fst zi) (A.snd zi)
- where
-  f :: Exp (Complex a) -> Exp Int -> Exp (Complex a, Int)
-  f z i =
-    let z' = next c z
-    in (dot z' >* 4) ? ( zi , lift (z', i+1) )
-
-
-mkinit :: Elt a => Acc (ComplexPlane a) -> Acc (Array DIM2 (Complex a, Int))
-mkinit cs = A.zip cs (A.fill (A.shape cs) 0)
+    lIMIT = P.fromIntegral depth
 
 
 -- Rendering -------------------------------------------------------------------
 
+{--
+prettyRGBA :: Exp Int32 -> Exp Int32 -> Exp RGBA32
+prettyRGBA cmax c = c ==* cmax ? ( 0xFF000000, escapeToColour (cmax - c) )
+
+-- Directly convert the iteration count on escape to a colour. The base set
+-- (x,y,z) yields a dark background with light highlights.
+--
+escapeToColour :: Exp Int32 -> Exp RGBA32
+escapeToColour m = constant 0xFFFFFFFF - (packRGBA32 $ lift (x,y,z,w))
+  where
+    x   = constant 0
+    w   = A.fromIntegral (3 * m)
+    z   = A.fromIntegral (5 * m)
+    y   = A.fromIntegral (7 * m)
+--}
+
+{--
 -- A simple colour scheme
 --
--- prettyRGBA :: Elt a => Exp Int -> Exp (Complex a, Int) -> Exp RGBA32
--- prettyRGBA lIMIT s' = r + g + b + a
---   where
---     s   = A.snd s'
---     t   = A.fromIntegral $ ((lIMIT - s) * 255) `quot` lIMIT
---     r   = (t     `rem` 128 + 64) * 0x1000000
---     g   = (t * 2 `rem` 128 + 64) * 0x10000
---     b   = (t * 3 `rem` 256     ) * 0x100
---     a   = 0xFF
-
-{-
+prettyRGBA :: Elt a => Exp Int -> Exp (Complex a, Int) -> Exp RGBA32
+prettyRGBA lIMIT s' = r + g + b + a
+  where
+    s   = A.snd s'
+    t   = A.fromIntegral $ ((lIMIT - s) * 255) `quot` lIMIT
+    r   = (t     `rem` 128 + 64) * 0x1000000
+    g   = (t * 2 `rem` 128 + 64) * 0x10000
+    b   = (t * 3 `rem` 256     ) * 0x100
+    a   = 0xFF
+--}
+{--
 prettyRGBA :: forall a. (Elt a, IsFloating a) => Exp Int -> Exp (Complex a, Int) -> Exp RGBA32
 prettyRGBA lIMIT s =
   let cmax      = A.fromIntegral lIMIT          :: Exp a
       c         = A.fromIntegral (A.snd s)
   in
-  c >* 250 ? ( 0xFF000000, rampColourHotToCold 0 cmax c )
+  c >* 0.98 * cmax ? ( 0xFF000000, rampColourHotToCold 0 cmax c )
 
 -- Standard Hot-to-Cold hypsometric colour ramp. Colour sequence is
 --   Red, Yellow, Green, Cyan, Blue
@@ -172,5 +156,4 @@ rampColourHotToCold vmin vmax vNotNorm
                 )))
     in
     rgba32OfFloat result
-
--}
+--}
