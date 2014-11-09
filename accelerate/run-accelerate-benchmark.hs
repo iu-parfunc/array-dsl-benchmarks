@@ -164,7 +164,7 @@ bls_desktop =
               baseline { cmdargs=[size], 
                          configs= And[ Set (Variant var)
                                         (RuntimeEnv "ACCELERATE_INPUT_FILE"
-                                         (root++"nbody/makefile_based/uniform.3dpts"))],
+                                         (root++"nbody/points/uniform.3dpts"))],
                          target= root++"nbody", -- Just the root
                          progname= Just "accelerate-nbody-float" }
 

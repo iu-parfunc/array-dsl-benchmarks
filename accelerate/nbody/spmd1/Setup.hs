@@ -1,1 +1,1 @@
-../seq_c/Setup.hs
+../common/Setup.hs

@@ -21,11 +21,16 @@ import System.Environment
 
 import Data.Array.Accelerate                                    as A
 import Data.Array.Accelerate.BackendClass
-import Data.Array.Accelerate.BackendKit.CompilerPipeline        ( phase0, phase1 )
+#ifndef NOSIMPLE
+import Data.Array.Accelerate.BackendKit.CompilerPipeline        ( phase0, phase1, repackAcc )
+#endif
 #ifdef ACCBACKEND
 import qualified ACCBACKEND                                     as A
 #else
 #error "Must specify ACCBACKEND CPP variable to build this nbody benchmark."
+#endif
+#ifdef EXTRAINITCUDA
+import qualified Foreign.CUDA.Driver                            as CUDA
 #endif
 
 
@@ -42,6 +47,9 @@ main :: IO ()
 main = do
   args          <- getArgs
   env           <- getEnvironment
+#ifdef EXTRAINITCUDA
+  CUDA.initialise []
+#endif
 
   let nBodies   = case args of
                     []                          -> 100
@@ -60,12 +68,17 @@ main = do
       speed     = 1
 
       masses    = randomArray (uniformR (1, mass)) (Z :. nBodies)
-      bodies    = A.run
-                $ A.map (setStartVelOfBody (constant speed))
+      bodiesAcc = A.map (setStartVelOfBody (constant speed))
                 $ A.zipWith setMassOfBody (A.use masses)
                 $ A.map unitBody (A.use positions)
 
-  putStrLn $ "  Input prefix[3] ... " P.++ show (P.take 3 (toList bodies))
+#ifndef NOSIMPLE
+  (_, bodies')  <- runTimedSimple A.defaultBackend Nothing A.defaultTrafoConfig (phase1 $ phase0 $ bodiesAcc)
+  let bodies    = repackAcc bodiesAcc bodies'
+#else
+  (_, bodies)   <- runTimed       A.defaultBackend Nothing A.defaultTrafoConfig bodiesAcc
+--  putStrLn $ "  Input prefix[3] ... " P.++ show (P.take 3 (toList bodies))
+#endif
   performGC
 
   -- Okay, now try to compute the n-body program
@@ -75,13 +88,12 @@ main = do
 
       solver    = Naive2.calcAccels epsilon
       step      = advanceBodies solver (use dt) (use bodies)
-      step'     = phase1 $ phase0 $ step
 
   -- Run the benchmark and get timing measuremnts
   --
   tBegin        <- getCurrentTime
 #ifndef NOSIMPLE
-  (time,res)    <- runTimedSimple A.defaultBackend Nothing A.defaultTrafoConfig step'
+  (time,res)    <- runTimedSimple A.defaultBackend Nothing A.defaultTrafoConfig (phase1 $ phase0 $ step)
 #else
   (time,res)    <- runTimed       A.defaultBackend Nothing A.defaultTrafoConfig step
 --  putStrLn $ "  Output prefix[3] ... " P.++ show (P.take 3 (toList res))

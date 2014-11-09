@@ -1,13 +1,12 @@
 Name:                nbody-spmd1
 Version:             0.0.0.1
-Synopsis:            NBody benchmark running with an SPMD backend.
 Build-type:          Custom
 Cabal-version:       >=1.10
 
 Executable bench-nbody-spmd1
     Default-Language:    Haskell2010
     main-is:    Main.hs
-    hs-source-dirs: ../makefile_based/ ../../common 
+    hs-source-dirs: ../common
     ghc-options: -O2 -threaded -rtsopts 
     cpp-options: -DACCBACKEND=Data.Array.Accelerate.SPMD_Example1
     cpp-options: -DNOSIMPLE
@@ -17,3 +16,4 @@ Executable bench-nbody-spmd1
                  , accelerate-backend-kit >= 0.15.0.4
                  , accelerate-multidev    >= 0.15.0.0
                  , accelerate             >= 0.15.0.0
+                 , mwc-random             >= 0.8
