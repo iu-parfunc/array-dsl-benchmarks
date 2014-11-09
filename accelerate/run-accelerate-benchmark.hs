@@ -23,7 +23,6 @@ import           System.IO.Unsafe   (unsafePerformIO)
 import HSBencher (defaultMainModifyConfig, all_cli_options, 
                   BenchSpace(..), Benchmark(..), ParamSetting(..), DefaultParamMeaning(..),
                   Config(..), SomePlugin(..))
-import HSBencher.Methods.Builtin (makeMethod)
 import HSBencher.Backend.Fusion  (defaultFusionPlugin)
 import HSBencher.Backend.Dribble (defaultDribblePlugin)
 import HSBencher.Harvesters (customTagHarvesterDouble)
@@ -99,12 +98,16 @@ blackscholes_args = [10000, 20000, 100000, 200000]
 mandel_args :: [Integer]
 mandel_args = [100,200,500,1000,2000,3000]
 
+kmeans_args :: [Integer]
+kmeans_args = [10000, 20000 .. 100000]
+
 bls_desktop :: [Benchmark DefaultParamMeaning]
-bls_desktop = 
+bls_desktop =
   ------ Traditional benchmarks ------
   allBlackscholes
-  ++ allNBodies 
+  ++ allNBodies
   ++ allMandel
+  ++ allKmeans
 
   ------ Multi-device benchmarks ------
   -- ++ allMultiNBodies        
@@ -141,7 +144,9 @@ bls_desktop =
                       | arg <- nbody_args ]
 --               concat [ allvariants (nbody_plusplus (show arg)) 
 --                      | arg <- nbody_args ]
-                
+
+  allKmeans = concat [ allvariants (kmeans (show arg)) | arg <- kmeans_args ]
+
   -- Vary the size of the big arithmetic expression generated:
   allScaleFlops = let sz = "2000000" in 
                   concat [ allvariants (scaleFlops args) 
@@ -194,6 +199,15 @@ bls_desktop =
                                      ],
                          target= root++"blackscholes", -- Just the root
                          progname= Just "accelerate-blackscholes" }
+
+  kmeans size var =
+    baseline { cmdargs  = [size]
+             , configs  = And [ Set (Variant var) (RuntimeEnv "ACCELERATE_POINTS_FILE"   (root ++ "kmeans/points/points.bin"))
+                              , Set (Variant var) (RuntimeEnv "ACCELERATE_CLUSTERS_FILE" (root ++ "kmeans/points/clusters"))
+                              ]
+             , target   = root ++ "kmeans"
+             , progname = Just "accelerate-kmeans"
+             }
 
   scaleFlops :: [String] -> String -> Benchmark DefaultParamMeaning
   scaleFlops args var = 
@@ -263,7 +277,7 @@ threadSelection = unsafePerformIO $ do
 fissionSelection :: [Int]
 fissionSelection = unsafePerformIO $ do
   p   <- getNumProcessors
-  return $ takeWhile (<p) [ 2^n | n <- [1..]] ++ 
+  return $ takeWhile (<p) [ 2^(n::Int) | n <- [1..]] ++ 
            [p, 2*p, 4*p]
 
 varyCilkThreads :: [Int] -> Benchmark DefaultParamMeaning -> Benchmark DefaultParamMeaning

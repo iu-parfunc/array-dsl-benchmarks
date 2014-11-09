@@ -74,6 +74,7 @@ function add_all() {
 add_all nbody
 add_all blackscholes
 add_all mandelbrot
+add_all kmeans
 
 # Retired:
 # add_all nbody_plusplus
@@ -108,12 +109,14 @@ DIRS+=" $HERE/scale_flops/seq_c \
 cd $HERE
 $CABAL sandbox init
 # And we build each individual benchmark in the same sandbox:
-for dir in $DIRS; do 
-  cd $dir
-  echo Creating sandbox in $dir 
-  echo Pointing to $HSBENCHER_SANDBOX 
-  cabal sandbox init --sandbox=$HSBENCHER_SANDBOX
-  cd $HERE
+for dir in $DIRS; do
+    if [ -d $dir ]; then
+        cd $dir
+        echo Creating sandbox in $dir
+        echo Pointing to $HSBENCHER_SANDBOX
+        cabal sandbox init --sandbox=$HSBENCHER_SANDBOX
+        cd $HERE
+    fi
 done
 
 $CABAL sandbox hc-pkg list
