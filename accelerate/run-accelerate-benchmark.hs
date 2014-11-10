@@ -231,6 +231,7 @@ bls_desktop =
     let dirroot = target (fn "seqC") in 
     [ (fn "seqC") { target= dirroot++"/seq_c/" }
     , (fn "cuda") { target= dirroot++"/cuda/"  }
+    , (fn "1gpu") { target= dirroot++"/1gpu/"  }
 
     , varyCilkThreads   threadSelection  $ (fn "cilk") { target= dirroot++"/cilk/"  }
 
