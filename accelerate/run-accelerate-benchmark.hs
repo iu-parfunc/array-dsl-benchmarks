@@ -233,9 +233,6 @@ bls_desktop =
     , (fn "cuda") { target= dirroot++"/cuda/"  }
 
     , varyCilkThreads   threadSelection  $ (fn "cilk") { target= dirroot++"/cilk/"  }
-    , varyFission fissionSelection $ (fn "fission1") { target= dirroot++"/fission1/" }
-    , (fn "fission2") { target= dirroot++"/fission2/"  }
-    , varyFission  fissionSelection $ (fn "spmd2")    { target= dirroot++"/spmd2/" }
 
     -- TODO: Vary threads for CPU/GPU:
     , varyFission fissionSelection $ (fn "cpugpu")   { target= dirroot++"/cpugpu/"  }

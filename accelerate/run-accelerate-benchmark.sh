@@ -64,12 +64,13 @@ function add_all() {
   DIRS+=" $HERE/$b/seq_c"
   DIRS+=" $HERE/$b/cilk"
   DIRS+=" $HERE/$b/cuda"
-  DIRS+=" $HERE/$b/fission1"
-  DIRS+=" $HERE/$b/fission2"
-  DIRS+=" $HERE/$b/spmd1"
-  DIRS+=" $HERE/$b/spmd2"
+#  DIRS+=" $HERE/$b/fission1"
+#  DIRS+=" $HERE/$b/fission2"
+#  DIRS+=" $HERE/$b/spmd1"
+#  DIRS+=" $HERE/$b/spmd2"
   DIRS+=" $HERE/$b/cpugpu"
   DIRS+=" $HERE/$b/2gpu"
+  DIRS+=" $HERE/$b/1gpu"
 }
 add_all nbody
 add_all blackscholes
