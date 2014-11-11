@@ -1,0 +1,20 @@
+Name:                nbody-1gpu
+Version:             0.0.0.1
+Build-type:          Custom
+Cabal-version:       >=1.10
+
+Executable bench-nbody-1gpu
+    Default-Language:    Haskell2010
+    main-is:    Main.hs
+    hs-source-dirs: ../common
+    ghc-options: -O2 -threaded -rtsopts 
+    cpp-options: -DACCBACKEND=Data.Array.Accelerate.Multi_1GPU
+    cpp-options: -DEXTRAINITCUDA
+    build-depends: base >= 4.6
+                 , bytestring >= 0.10, time, array >= 0.4
+                 , bytestring-lexing >= 0.4
+                 , accelerate-backend-kit >= 0.15.0.4
+                 , accelerate-multidev    >= 0.15.1.0
+                 , accelerate             >= 0.15
+                 , cuda                   >= 0.5.1.1
+                 , mwc-random             >= 0.8
