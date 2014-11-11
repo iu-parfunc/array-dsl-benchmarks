@@ -93,7 +93,7 @@ nbody_args :: [Integer]
 nbody_args = [1000,5000 .. 66000] 
 
 blackscholes_args :: [Integer]
-blackscholes_args = [10000, 20000, 100000, 200000]
+blackscholes_args = [1000000, 2000000, 10000000, 20000000]
 
 mandel_args :: [Integer]
 mandel_args = [100,200,500,1000,2000,3000]
