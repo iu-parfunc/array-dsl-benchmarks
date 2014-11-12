@@ -38,7 +38,7 @@ import qualified Foreign.CUDA.Driver                            as CUDA
 -- --------
 
 defaultInputFile, defaultOutputFile :: FilePath
-defaultInputFile        = "uniform.3dpts"
+defaultInputFile        = "../points/uniform.3dpts"
 defaultOutputFile       = "nbody_out.3dpts"
 
 -- Main
