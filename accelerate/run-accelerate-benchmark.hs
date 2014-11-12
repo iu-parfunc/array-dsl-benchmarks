@@ -236,8 +236,11 @@ bls_desktop =
     , varyCilkThreads   threadSelection  $ (fn "cilk") { target= dirroot++"/cilk/"  }
 
     -- TODO: Vary threads for CPU/GPU:
-    , varyFission fissionSelection $ (fn "cpugpu")   { target= dirroot++"/cpugpu/"  }
-    , varyFission fissionSelection $ (fn "2gpu")     { target= dirroot++"/2gpu/"  }
+    , (fn "cpugpu")   { target= dirroot++"/cpugpu/"  }
+    , (fn "2gpu")     { target= dirroot++"/2gpu/"  }
+-- We shouldn't be varying fission factor right ? 
+--    , varyFission fissionSelection $ (fn "cpugpu")   { target= dirroot++"/cpugpu/"  }
+--    , varyFission fissionSelection $ (fn "2gpu")     { target= dirroot++"/2gpu/"  }
     ]
 
   baseline = Benchmark { cmdargs=[], configs= And[], benchTimeOut=Just defaultTimeout, target="", progname=Nothing }
