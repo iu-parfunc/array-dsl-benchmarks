@@ -9,7 +9,7 @@ import IO
 import Common.Body
 import Common.World
 import Random.Array
--- import qualified Solver.Naive1                                  as Naive1
+import qualified Solver.Naive1                                  as Naive1
 import qualified Solver.Naive2                                  as Naive2
 -- import qualified Solver.BarnsHut                                as BarnsHut
 
@@ -86,7 +86,7 @@ main = do
   let epsilon   = 40
       dt        = fromList Z [0.1]
 
-      solver    = Naive2.calcAccels epsilon
+      solver    = Naive1.calcAccels epsilon
       step      = advanceBodies solver (use dt) (use bodies)
 
   -- Run the benchmark and get timing measuremnts
